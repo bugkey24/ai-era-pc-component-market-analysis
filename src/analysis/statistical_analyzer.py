@@ -52,9 +52,7 @@ class StatisticalAnalyzer:
         """Return correlation stats between ``price`` and *target* column."""
         if "price" not in self.df.columns or target not in self.df.columns:
             return {}
-        r, p = stats.pearsonr(
-            self.df["price"].dropna(), self.df[target].dropna()
-        )
+        r, p = stats.pearsonr(self.df["price"].dropna(), self.df[target].dropna())
         return {"pearson_r": round(r, 4), "p_value": round(p, 6)}
 
     # ------------------------------------------------------------------
@@ -79,11 +77,7 @@ class StatisticalAnalyzer:
         if "source" not in self.df.columns:
             return pd.DataFrame()
 
-        return (
-            self.df.groupby("source")["price"]
-            .agg(["mean", "median", "std", "count"])
-            .round(2)
-        )
+        return self.df.groupby("source")["price"].agg(["mean", "median", "std", "count"]).round(2)
 
     # ------------------------------------------------------------------
     # Normality

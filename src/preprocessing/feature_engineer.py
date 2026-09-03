@@ -35,7 +35,9 @@ class FeatureEngineer:
     # Price-based features
     # ------------------------------------------------------------------
 
-    def create_price_per_gb(self, price_col: str = "price", capacity_col: str = "spec_capacity") -> FeatureEngineer:
+    def create_price_per_gb(
+        self, price_col: str = "price", capacity_col: str = "spec_capacity"
+    ) -> FeatureEngineer:
         """Add ``price_per_gb`` = price / capacity_in_gb."""
         if price_col not in self.df.columns or capacity_col not in self.df.columns:
             logger.warning("Required columns missing — skipping price_per_gb")

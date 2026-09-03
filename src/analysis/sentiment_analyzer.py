@@ -41,20 +41,100 @@ class SentimentAnalyzer:
 
     # Built-in fallback stopwords (used when the NLTK corpus is unavailable)
     _STOPWORDS_ID = [
-        "yang", "dan", "di", "ini", "itu", "untuk", "dengan", "pada",
-        "adalah", "ke", "dari", "tidak", "akan", "juga", "sudah", "ada",
-        "bisa", "lebih", "mereka", "saya", "kami", "kita", "bagi", "atau",
-        "namun", "jika", "maka", "hanya", "masih", "lagi", "setiap",
-        "oleh", "karena", "itu", "sangat", "telah", "dalam", "belum",
-        "sedang", "bahwa", "selalu", "hampir", "walau", "walaupun",
+        "yang",
+        "dan",
+        "di",
+        "ini",
+        "itu",
+        "untuk",
+        "dengan",
+        "pada",
+        "adalah",
+        "ke",
+        "dari",
+        "tidak",
+        "akan",
+        "juga",
+        "sudah",
+        "ada",
+        "bisa",
+        "lebih",
+        "mereka",
+        "saya",
+        "kami",
+        "kita",
+        "bagi",
+        "atau",
+        "namun",
+        "jika",
+        "maka",
+        "hanya",
+        "masih",
+        "lagi",
+        "setiap",
+        "oleh",
+        "karena",
+        "itu",
+        "sangat",
+        "telah",
+        "dalam",
+        "belum",
+        "sedang",
+        "bahwa",
+        "selalu",
+        "hampir",
+        "walau",
+        "walaupun",
     ]
 
     _STOPWORDS_EN = [
-        "the", "is", "at", "which", "on", "a", "an", "and", "or", "but",
-        "in", "with", "to", "for", "of", "not", "no", "can", "had", "has",
-        "it", "its", "was", "were", "be", "been", "are", "do", "did",
-        "this", "that", "these", "those", "i", "you", "he", "she", "we",
-        "they", "me", "him", "her", "us", "them", "my", "your", "his",
+        "the",
+        "is",
+        "at",
+        "which",
+        "on",
+        "a",
+        "an",
+        "and",
+        "or",
+        "but",
+        "in",
+        "with",
+        "to",
+        "for",
+        "of",
+        "not",
+        "no",
+        "can",
+        "had",
+        "has",
+        "it",
+        "its",
+        "was",
+        "were",
+        "be",
+        "been",
+        "are",
+        "do",
+        "did",
+        "this",
+        "that",
+        "these",
+        "those",
+        "i",
+        "you",
+        "he",
+        "she",
+        "we",
+        "they",
+        "me",
+        "him",
+        "her",
+        "us",
+        "them",
+        "my",
+        "your",
+        "his",
     ]
 
     def __init__(self, language: str = "indonesian", max_features: int = 5000) -> None:
@@ -170,16 +250,14 @@ class SentimentAnalyzer:
 
         for aspect_name, keywords in aspects.items():
             indices = [
-                i for i, t in enumerate(lower_texts)
-                if any(kw.lower() in t for kw in keywords)
+                i for i, t in enumerate(lower_texts) if any(kw.lower() in t for kw in keywords)
             ]
             if not indices:
                 continue
             preds = [all_preds[i] for i in indices]
             total = len(preds)
             results[aspect_name] = {
-                label: round(preds.count(label) / total, 3)
-                for label in self.label_encoder.classes_
+                label: round(preds.count(label) / total, 3) for label in self.label_encoder.classes_
             }
         return results
 

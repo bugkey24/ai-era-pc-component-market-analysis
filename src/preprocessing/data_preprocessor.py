@@ -41,11 +41,7 @@ class DataPreprocessor:
             return self
 
         pattern = r"[^0-9]"
-        self.df[column] = (
-            self.df[column]
-            .astype(str)
-            .str.replace(pattern, "", regex=True)
-        )
+        self.df[column] = self.df[column].astype(str).str.replace(pattern, "", regex=True)
         self.df[column] = pd.to_numeric(self.df[column], errors="coerce").fillna(0).astype(int)
         logger.info("Prices cleaned — non-zero rows: %d", (self.df[column] > 0).sum())
         return self
@@ -72,15 +68,15 @@ class DataPreprocessor:
             self.df.dropna(subset=subset, inplace=True)
         elif strategy == "fill":
             numeric_cols = self.df.select_dtypes(include=np.number).columns
-            self.df[numeric_cols] = self.df[numeric_cols].fillna(
-                self.df[numeric_cols].median()
-            )
+            self.df[numeric_cols] = self.df[numeric_cols].fillna(self.df[numeric_cols].median())
         else:
             raise ValueError(f"Unknown strategy '{strategy}'. Use 'drop' or 'fill'.")
 
         logger.info(
             "handle_missing(%s): %d → %d rows",
-            strategy, before, len(self.df),
+            strategy,
+            before,
+            len(self.df),
         )
         return self
 
@@ -100,14 +96,14 @@ class DataPreprocessor:
         name = self.df["name"].astype(str)
 
         # Capacity (e.g. 1TB, 512GB, 2TB)
-        self.df["spec_capacity"] = name.str.extract(
-            r"(\d+)\s*(GB|TB)", flags=re.IGNORECASE
-        ).apply(lambda r: f"{r[0]}{r[1].upper()}" if pd.notna(r[0]) else "", axis=1)
+        self.df["spec_capacity"] = name.str.extract(r"(\d+)\s*(GB|TB)", flags=re.IGNORECASE).apply(
+            lambda r: f"{r[0]}{r[1].upper()}" if pd.notna(r[0]) else "", axis=1
+        )
 
         # Memory type (DDR4 / DDR5)
-        self.df["spec_memory_type"] = name.str.extract(
-            r"(DDR[45])", flags=re.IGNORECASE
-        )[0].fillna("")
+        self.df["spec_memory_type"] = name.str.extract(r"(DDR[45])", flags=re.IGNORECASE)[0].fillna(
+            ""
+        )
 
         # Interface (NVMe / SATA / PCIe)
         self.df["spec_interface"] = name.str.extract(
@@ -121,9 +117,7 @@ class DataPreprocessor:
     # Outlier removal
     # ------------------------------------------------------------------
 
-    def remove_outliers(
-        self, column: str = "price", threshold: float = 3.0
-    ) -> DataPreprocessor:
+    def remove_outliers(self, column: str = "price", threshold: float = 3.0) -> DataPreprocessor:
         """Remove rows whose z-score in *column* exceeds *threshold*."""
         if column not in self.df.columns or len(self.df) == 0:
             return self
@@ -139,7 +133,10 @@ class DataPreprocessor:
         self.df = self.df[z < threshold].reset_index(drop=True)
         logger.info(
             "remove_outliers(%s, %.1f): %d → %d rows",
-            column, threshold, before, len(self.df),
+            column,
+            threshold,
+            before,
+            len(self.df),
         )
         return self
 
