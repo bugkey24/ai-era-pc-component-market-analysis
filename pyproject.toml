@@ -50,6 +50,8 @@ ignore = [
 [tool.ruff.lint.per-file-ignores]
 # Tests use fixtures/asserts freely; noqa needed for deliberate magic values
 "tests/*" = ["B011"]
+# Notebook setup cells intentionally install packages / download data before imports
+"notebooks/*" = ["E402"]
 
 [tool.ruff.format]
 quote-style = "double"
