@@ -57,3 +57,7 @@ config_local.yaml
 *.exe
 chromedriver/
 geckodriver/
+
+# Coverage artifacts
+.coverage
+htmlcov/
