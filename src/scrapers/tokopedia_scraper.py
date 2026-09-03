@@ -30,14 +30,13 @@ class TokopediaScraper(BaseScraper):
         return resp.text
 
     def get_next_page_url(self, current_url: str) -> Optional[str]:
+        """Increment the ``page`` query param, appending it on first use."""
         match = re.search(r"[?&]page=(\d+)", current_url)
-        if not match:
-            return None
-        next_page = int(match.group(1)) + 1
-        if "page=" in current_url:
-            return re.sub(r"page=\d+", f"page={next_page}", current_url)
+        if match:
+            return re.sub(r"page=\d+", f"page={int(match.group(1)) + 1}", current_url)
+        # First pagination step — no page param yet
         sep = "&" if "?" in current_url else "?"
-        return f"{current_url}{sep}page={next_page}"
+        return f"{current_url}{sep}page=2"
 
     def _extract_items(self, html: str) -> list[Tag]:
         soup = BeautifulSoup(html, "lxml")
