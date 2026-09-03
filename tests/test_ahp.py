@@ -4,6 +4,7 @@ import numpy as np
 import pytest
 
 from src.dss import AHPProcessor
+from src.utils import load_config
 
 
 class TestPairwiseMatrix:
@@ -84,3 +85,24 @@ class TestSummary:
         assert summary["criteria"] == ["a", "b", "c"]
         assert summary["is_consistent"] is True
         assert set(summary["weights"].keys()) == {"a", "b", "c"}
+
+
+class TestConfigDrivenMatrix:
+    """Regression: YAML parses ``1/3`` as a *string* — the processor must accept it."""
+
+    def test_accepts_fraction_strings(self):
+        ahp = AHPProcessor(["a", "b", "c"])
+        ahp.build_pairwise_matrix(
+            [["1", "3", "5"], ["1/3", "1", "3"], ["1/5", "1/3", "1"]]
+        )
+        ahp.calculate_weights().check_consistency()
+        assert ahp.is_consistent()
+        assert ahp.get_weights().sum() == pytest.approx(1.0, abs=1e-6)
+
+    def test_accepts_real_config_matrix(self):
+        config = load_config("config.yaml")
+        dss = config["dss"]
+        ahp = AHPProcessor(dss["criteria"])
+        ahp.build_pairwise_matrix(dss["pairwise_matrix"])
+        ahp.calculate_weights().check_consistency()
+        assert ahp.is_consistent(), f"CR = {ahp.consistency_ratio}"
