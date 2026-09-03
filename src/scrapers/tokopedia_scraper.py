@@ -45,9 +45,16 @@ _EXCLUDE_PATTERNS = re.compile(
     r"holder|riser|bracket|stand|cable|kabel|extension|adapter|support"
     r"|laptop|notebook|mini pc|pc rakitan|desktop|all.in.one|monitor"
     r"|motherboard|mobo|enclosure|casing|heatsink|heat sink|baut"
-    r"|ssd cooler|thickener|vga bracket",
+    r"|ssd cooler|\bcase\b|thickener|vga bracket",
     re.IGNORECASE,
 )
+
+# Sellers miscategorize listings (e.g. a Radeon GPU under the RAM
+# breadcrumb) — GPU-chip names are never valid RAM/SSD products
+_CROSS_CATEGORY_PATTERNS = {
+    "ram": re.compile(r"\bvga\b|geforce|radeon|\brtx\b|\bgtx\b", re.IGNORECASE),
+    "ssd": re.compile(r"\bvga\b|geforce|radeon|\brtx\b|\bgtx\b", re.IGNORECASE),
+}
 
 
 class TokopediaScraper(BaseScraper):
@@ -172,6 +179,10 @@ class TokopediaScraper(BaseScraper):
         name = entity.get("name") or ""
         if not name or _EXCLUDE_PATTERNS.search(name):
             return False
+
+        cross = _CROSS_CATEGORY_PATTERNS.get(category)
+        if cross and cross.search(name):
+            return False  # e.g. a Radeon GPU listed under the RAM breadcrumb
 
         expected = _CATEGORY_SEGMENTS.get(category)
         if expected is None:

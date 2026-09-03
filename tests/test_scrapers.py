@@ -218,10 +218,20 @@ class TestTokopediaCacheParsing:
             ("SSD Cooler JONSBO M.2-6 Grey", "komputer-laptop/media-penyimpanan-data/ssd", "ssd"),
             ("Baut SSD M.2 SATA", "komputer-laptop/media-penyimpanan-data/ssd", "ssd"),
             ("Laptop Lenovo Legion RTX 5060", "komputer-laptop/komponen-komputer/vga-card", "gpu"),
+            ("Case SSD M2 NVMe External USB", "komputer-laptop/media-penyimpanan-data/ssd", "ssd"),
         ]
         for name, bc, cat in noise:
             entity = {"name": name, "_category": {"breadcrumb": bc}}
             assert not scraper._is_relevant(entity, cat), f"should exclude: {name}"
+
+    def test_cross_category_miscategorization_filtered(self, scraper_config):
+        """Sellers miscategorize: a Radeon GPU appeared under the RAM breadcrumb."""
+        scraper = TokopediaScraper(scraper_config)
+        entity = {
+            "name": "VenomRX Radeon RX 580 8GB DDR5",
+            "_category": {"breadcrumb": "komputer-laptop/komponen-komputer/ram-komputer"},
+        }
+        assert not scraper._is_relevant(entity, "ram")
 
     def test_build_search_url_uses_keyword_map(self, scraper_config):
         scraper = TokopediaScraper({**scraper_config, "search_keywords": {"gpu": "rtx"}})
