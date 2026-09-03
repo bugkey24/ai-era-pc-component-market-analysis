@@ -126,14 +126,60 @@ class PipelineOrchestrator:
         }
 
     def _run_sentiment(self) -> None:
+        """Train the sentiment model when review data is available.
+
+        Reviews are loaded from ``data/raw/reviews_*.csv`` (produced by the
+        review scrapers). Labels are *weak supervision* derived from the
+        review rating: >=4 → positive, <=2 → negative, else neutral. For
+        production-grade accuracy, replace with hand-labelled reviews.
+        """
         sent_cfg = self.config.get("sentiment", {})
         sentiment = SentimentAnalyzer(
             language=sent_cfg.get("language", "indonesian"),
             max_features=sent_cfg.get("max_features", 5000),
         )
-        # Training is deferred to when labelled review data is available
-        # For now, store the untrained model for the pipeline to proceed
+
+        reviews = self._load_reviews()
+        if reviews is None or len(reviews) < 10:
+            logger.info(
+                "No usable review data (need ≥10 rows in data/raw/reviews_*.csv) "
+                "— sentiment model left untrained"
+            )
+            self._sentiment_analyzer = sentiment
+            return
+
+        texts = reviews["review_text"].fillna("").astype(str).tolist()
+        ratings = pd.to_numeric(reviews.get("rating"), errors="coerce").fillna(3)
+        labels = pd.cut(
+            ratings,
+            bins=[float("-inf"), 2, 4, 5],
+            labels=["negative", "neutral", "positive"],
+        ).astype(str)
+
+        try:
+            sentiment.train(texts, labels.tolist())
+            # Aggregate per-product sentiment score into the product data
+            if "product_id" in reviews.columns and self.data is not None:
+                reviews["sentiment_score"] = sentiment.predict(texts)
+                pos = (reviews["sentiment_score"] == "positive").astype(float)
+                reviews["sentiment_score"] = pos
+                per_product = reviews.groupby("product_id")["sentiment_score"].mean()
+                self.data["sentiment_score"] = self.data["product_id"].map(per_product).fillna(0.0)
+                logger.info("Per-product sentiment scores merged into product data")
+        except ValueError as exc:
+            logger.warning("Sentiment training skipped: %s", exc)
+
         self._sentiment_analyzer = sentiment
+
+    def _load_reviews(self) -> pd.DataFrame | None:
+        """Concatenate any ``data/raw/reviews_*.csv`` files, or return None."""
+        review_files = sorted(Path("data/raw").glob("reviews_*.csv"))
+        if not review_files:
+            return None
+        frames = [pd.read_csv(f) for f in review_files]
+        combined = pd.concat(frames, ignore_index=True)
+        logger.info("Loaded %d reviews from %d file(s)", len(combined), len(frames))
+        return combined
 
     def _run_dss(self) -> pd.DataFrame:
         dss_cfg = self.config.get("dss", {})
