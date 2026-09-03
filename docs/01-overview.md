@@ -74,22 +74,28 @@ The global semiconductor industry is experiencing a structural crisis where AI i
 Project Deliverables
 ├── README.md (Project Documentation)
 ├── Google Colab Notebook (Complete Implementation)
-│   ├── Section 1: Introduction & Background
-│   ├── Section 2: Data Scraping Module
-│   ├── Section 3: Data Preprocessing & Cleaning
-│   ├── Section 4: Statistical Analysis
-│   ├── Section 5: Sentiment Analysis
-│   ├── Section 6: AHP-TOPSIS Implementation
-│   ├── Section 7: Results & Visualizations
-│   └── Section 8: Conclusions & Recommendations
+│   ├── Section 1-2: Environment Setup & Configuration
+│   ├── Section 3-4: Data Loading (existing CSVs or live scraping)
+│   ├── Section 5: Preprocessing & Feature Engineering
+│   ├── Section 6: Statistical Analysis
+│   ├── Section 7: Sentiment Analysis
+│   ├── Section 8: AHP-TOPSIS Decision Model
+│   ├── Section 9-10: Visualization & Export
+│   └── Section 11: Conclusions
+├── src/ Package (7 layers, importable)
+│   ├── scrapers/ (products + reviews + robots compliance gate)
+│   ├── preprocessing/ · analysis/ · dss/ · visualization/
+│   └── pipeline.py (7-phase orchestrator)
 ├── Data Outputs
-│   ├── raw_data.csv
 │   ├── cleaned_data.csv
-│   └── analysis_results.csv
-└── Visualizations
-    ├── price_trends.png
-    ├── sentiment_distribution.png
-    └── ranking_results.png
+│   ├── rankings.csv
+│   ├── statistics.json
+│   └── prediction.json
+├── Visualizations
+│   ├── price_trends.png
+│   ├── correlation_heatmap.png
+│   └── ranking_results.png
+└── Test Suite (149 offline tests, CI-gated)
 ```
 
 ---

@@ -31,6 +31,7 @@
 2. Selenium WebDriver Documentation
 3. Pandas Documentation
 4. Scikit-learn Documentation
+5. [RFC 9309 — Robots Exclusion Protocol](https://datatracker.ietf.org/doc/html/rfc9309) (governs `src/scrapers/robots_guard.py`)
 
 ---
 
