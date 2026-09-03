@@ -25,6 +25,10 @@ filterwarnings = [
     "ignore::UserWarning:seaborn.*",
 ]
 
+[tool.coverage.run]
+source = ["src"]
+omit = ["src/__init__.py"]
+
 [tool.ruff]
 line-length = 100
 target-version = "py39"
