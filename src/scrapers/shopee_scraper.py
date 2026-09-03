@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import re
 import time
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
@@ -23,7 +23,7 @@ class ShopeeScraper(BaseScraper):
 
     def __init__(self, config: dict) -> None:
         super().__init__(config)
-        self.driver: Optional[webdriver.Chrome] = None
+        self.driver: webdriver.Chrome | None = None
 
     # ------------------------------------------------------------------
     # BaseScraper interface
@@ -45,16 +45,16 @@ class ShopeeScraper(BaseScraper):
         self._scroll_to_load()
         return self.driver.page_source
 
-    def get_next_page_url(self, current_url: str) -> Optional[str]:
+    def get_next_page_url(self, current_url: str) -> str | None:
         # Shopee loads products via infinite scroll; return None to stop.
         return None
 
-    def _extract_items(self, html: str) -> List[WebElement]:
+    def _extract_items(self, html: str) -> list[WebElement]:
         if self.driver is None:
             return []
         return self.driver.find_elements(By.CSS_SELECTOR, '[data-testid="product-item"]')
 
-    def parse_product(self, element: WebElement) -> Dict[str, Any]:
+    def parse_product(self, element: WebElement) -> dict[str, Any]:
         return {
             "product_id": element.get_attribute("data-sqe") or "",
             "name": self._safe_attr(element, '[data-testid="nameOfProduct"]', "textContent"),

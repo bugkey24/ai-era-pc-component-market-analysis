@@ -98,6 +98,6 @@ class TestPrediction:
         texts = ["harga mahal", "kualitas bagus", "performa cepat"]
         aspects = {"price": ["harga"], "performance": ["performa"]}
         results = analyzer.aspect_sentiment(texts, aspects)
-        for aspect, dist in results.items():
+        for _aspect, dist in results.items():
             assert set(dist.keys()) <= {"positive", "negative", "neutral"}
             assert all(0.0 <= v <= 1.0 for v in dist.values())

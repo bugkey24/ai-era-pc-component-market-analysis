@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import logging
-from typing import Optional
 
 import numpy as np
 import pandas as pd
@@ -17,8 +16,8 @@ class StatisticalAnalyzer:
 
     def __init__(self, df: pd.DataFrame) -> None:
         self.df = df.copy()
-        self.summary: Optional[pd.DataFrame] = None
-        self.correlations: Optional[pd.DataFrame] = None
+        self.summary: pd.DataFrame | None = None
+        self.correlations: pd.DataFrame | None = None
         logger.info("StatisticalAnalyzer initialised with %d rows", len(self.df))
 
     # ------------------------------------------------------------------
@@ -108,8 +107,8 @@ class StatisticalAnalyzer:
     # Output
     # ------------------------------------------------------------------
 
-    def get_summary(self) -> Optional[pd.DataFrame]:
+    def get_summary(self) -> pd.DataFrame | None:
         return self.summary
 
-    def get_correlations(self) -> Optional[pd.DataFrame]:
+    def get_correlations(self) -> pd.DataFrame | None:
         return self.correlations
