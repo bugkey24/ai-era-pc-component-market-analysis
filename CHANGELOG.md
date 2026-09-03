@@ -6,6 +6,39 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [1.2.1] - 2026-09-03
+
+### Added
+
+- **Committed real-data snapshot** (`data/snapshot/`) — 247-product dataset
+  + 42-review corpus travel with the repo, so notebook/Colab runs present
+  the actual live-experiment data instead of a synthetic fallback
+  (gitignore exception added).
+- `docs/09-live-experiment-results.md` — full live-experiment results:
+  collection stats, statistical findings, sentiment reality (skewed
+  corpus, accuracy honestly unmeasurable), AHP-TOPSIS top-10 on real
+  data, normalization prediction.
+- `docs/10-running-guide.md` — how to run: Colab-first (auto-setup cell,
+  compatibility notes, collection-mode rules of engagement), local setup,
+  pipeline API usage, troubleshooting table.
+
+### Changed
+
+- Notebook data-loading cell prefers `data/snapshot/*products*.csv`,
+  falls back to fresher `data/raw` output, synthetic sample last; TOPSIS
+  cell resolves criterion columns adaptively (live cache has `seller_tier`
+  but no `seller_rating`/`followers` — demo data is the reverse).
+  Re-executed headless on the real snapshot: 23 cells, zero errors,
+  real TOPSIS ranking embedded.
+- All documentation aligned to the shipped state: docs/04 rewritten around
+  the live-validated cache-based collection (dead DOM selectors removed),
+  docs/05 checklist at actual progress with pointers to real results,
+  doc-09/10 cross-links in every nav bar, stale test counts corrected
+  (160), version badge bumped.
+- Cleaned: `notebooks/.gitkeep` removed (notebook exists).
+
+---
+
 ## [1.2.0] - 2026-09-03
 
 ### Release highlights

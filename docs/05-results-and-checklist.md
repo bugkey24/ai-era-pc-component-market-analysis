@@ -4,10 +4,17 @@
 </p>
 
 <p align="center">
-  <a href="../README.md">README</a> | <a href="./01-overview.md">Overview</a> | <a href="./02-architecture.md">Architecture</a> | <a href="./03-methodology.md">Methodology</a> | <a href="./04-data-collection.md">Data Collection</a> | <a href="./06-timeline.md">Timeline</a> | <a href="./07-references.md">References</a>
+  <a href="../README.md">README</a> | <a href="./01-overview.md">Overview</a> | <a href="./02-architecture.md">Architecture</a> | <a href="./03-methodology.md">Methodology</a> | <a href="./04-data-collection.md">Data Collection</a> | <a href="./06-timeline.md">Timeline</a> | <a href="./07-references.md">References</a> | <a href="./08-git-workflow.md">Git Workflow</a> | <a href="./09-live-experiment-results.md">Live Results</a> | <a href="./10-running-guide.md">Running Guide</a>
 </p>
 
 # Expected Results, Checklist & Risk Management
+
+> **Actual results from the live experiments:**
+> [`09-live-experiment-results.md`](./09-live-experiment-results.md) ·
+> formal criteria assessment:
+> [`compliance/final-validation-v1-2-0.md`](./compliance/final-validation-v1-2-0.md).
+> The "expected" tables below predate collection and are retained for the
+> project-plan record.
 
 ---
 
@@ -95,12 +102,12 @@ Scenario Analysis:
 
 ### 2.3 Post-Implementation (Week 4)
 
-- [ ] Run complete pipeline against live platforms *(pending — selectors need live validation)*
-- [ ] Validate results
+- [x] Run complete pipeline against live platforms *(Tokopedia: 247 products + 42 reviews)*
+- [x] Validate results *(scorecard in `compliance/final-validation-v1-2-0.md`)*
 - [x] Create documentation
-- [ ] Generate visualizations from live data
-- [ ] Write conclusions and recommendations
-- [ ] Share Google Colab notebook
+- [x] Generate visualizations from live data *(price trends, correlation heatmap, ranking)*
+- [x] Write conclusions and recommendations *(see `09-live-experiment-results.md` §4–5)*
+- [ ] Share Google Colab notebook URL on the submission page *(upload + share — user step)*
 
 ---
 

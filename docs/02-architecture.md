@@ -5,7 +5,7 @@
 </p>
 
 <p align="center">
-  <a href="../README.md">README</a> | <a href="./01-overview.md">Overview</a> | <a href="./03-methodology.md">Methodology</a> | <a href="./04-data-collection.md">Data Collection</a> | <a href="./05-results-and-checklist.md">Results</a> | <a href="./06-timeline.md">Timeline</a> | <a href="./07-references.md">References</a>
+  <a href="../README.md">README</a> | <a href="./01-overview.md">Overview</a> | <a href="./03-methodology.md">Methodology</a> | <a href="./04-data-collection.md">Data Collection</a> | <a href="./05-results-and-checklist.md">Results</a> | <a href="./09-live-experiment-results.md">Live Results</a> | <a href="./10-running-guide.md">Running Guide</a> | <a href="./06-timeline.md">Timeline</a> | <a href="./07-references.md">References</a>
 </p>
 
 # Technical Architecture
@@ -836,7 +836,7 @@ ai-era-pc-component-market-analysis/
 │       ├── logger.py           # re-exports setup_logger (documented layout)
 │       └── helpers.py          # load_config, setup_logger
 │
-├── tests/                      # 149 tests (pytest; offline, no network)
+├── tests/                      # 160 tests (pytest; offline, no network)
 │   ├── conftest.py
 │   ├── test_ahp.py
 │   ├── test_topsis.py
@@ -854,16 +854,23 @@ ai-era-pc-component-market-analysis/
 │   └── main_pipeline.ipynb     # 11-section Colab pipeline (headless-verified)
 │
 ├── docs/
-│   ├── 01-overview.md … 08-git-workflow.md
-│   └── compliance/
-│       ├── README.md           # robots.txt analysis + verdicts
-│       └── robots/
-│           ├── tokopedia.robots.txt
-│           ├── shopee.robots.txt
-│           └── blibli.robots.txt
+│   ├── 01-overview.md … 10-running-guide.md
+│   ├── compliance/
+│   │   ├── README.md           # robots.txt analysis + verdicts
+│   │   ├── live-validation-2026-09-03.md
+│   │   ├── final-validation-v1-2-0.md
+│   │   └── robots/
+│   │       ├── tokopedia.robots.txt
+│   │       ├── shopee.robots.txt
+│   │       └── blibli.robots.txt
+│   ├── 09-live-experiment-results.md   # live findings + scorecard pointer
+│   └── 10-running-guide.md             # Colab-first running instructions
 │
 ├── data/
-│   ├── raw/                    # scraped CSVs + reviews_*.csv (sentiment input)
+│   ├── snapshot/               # committed real experiment data (tracks in git;
+│   │   ├── tokopedia_products.csv  #  the notebook/Colab presents this)
+│   │   └── reviews_tokopedia.csv
+│   ├── raw/                    # fresher local scrape output (gitignored)
 │   └── processed/
 │       └── cleaned_data.csv
 │
@@ -891,7 +898,7 @@ ai-era-pc-component-market-analysis/
 | **Sentiment Analysis** | NLTK, scikit-learn (SVM)         | Text classification            |
 | **Visualization**      | Matplotlib, Seaborn, WordCloud   | Data visualization             |
 | **DSS Methods**        | Custom AHP-TOPSIS implementation | Multi-criteria decision making |
-| **Testing**            | pytest + pytest-cov (149 tests)  | Offline test suite, coverage gate ≥70% |
+| **Testing**            | pytest + pytest-cov (160 tests)  | Offline test suite, coverage gate ≥70% |
 | **Quality Tooling**    | ruff, pre-commit, GitHub Actions | Lint, format, CI on 3.10/3.11/3.12 |
 | **Environment**        | Google Colab                     | Cloud-based execution          |
 
