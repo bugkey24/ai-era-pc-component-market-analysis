@@ -10,6 +10,16 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- **Robots.txt compliance layer** (`RobotsGuard`,
+  `src/scrapers/robots_guard.py`) — RFC 9309 longest-match engine
+  (replaces `urllib.robotparser`, which drops query strings and
+  mishandles `$`-anchored rules), offline resolution from the committed
+  snapshots in `docs/compliance/robots/` with live fetch as fallback,
+  fail-closed on unreachable robots.txt, per-origin caching, and
+  `Crawl-delay` honouring in both scrape loops. Every fetch is now
+  robots-checked before being requested.
+- `robots_permitted` flag on review scrapers — orchestration can skip
+  robots-blocked platforms (`BlibliReviewScraper` = False).
 - **Price-normalization prediction module** (`NormalizationPredictor`,
   `src/analysis/normalization_predictor.py`) — implements methodology
   Phase 6, which was documented but never built: the regression-based

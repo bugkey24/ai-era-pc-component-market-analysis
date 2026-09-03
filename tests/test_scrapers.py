@@ -34,6 +34,7 @@ def scraper_config():
         "timeout": 5,
         "retry_count": 1,
         "delay": 0.0,
+        "robots": {"enabled": False},  # compliance behaviour tested in test_robots_guard.py
     }
 
 
@@ -104,10 +105,12 @@ class TestTokopediaParsing:
         assert product["seller_name"] == ""
         assert product["location"] == ""
 
-    def test_build_search_url(self, scraper_config):
+    def test_build_search_url_is_robots_compliant(self, scraper_config):
         scraper = TokopediaScraper(scraper_config)
         url = scraper._build_search_url("gpu")
-        assert "q=gpu" in url
+        # Allow: /find/*?page — the legacy /search?q= surface is disallowed
+        assert url.endswith("/find/gpu?page=1")
+        assert "/search" not in url
 
     def test_next_page_pagination(self, scraper_config):
         scraper = TokopediaScraper(scraper_config)
@@ -138,6 +141,13 @@ class TestBlibliParsing:
         assert product["name"] == "Samsung 980 1TB NVMe"
         assert product["price"] == 950_000
         assert product["rating"] == 4.7
+
+    def test_build_search_url_avoids_search_path(self, scraper_config):
+        # Blibli robots disallows /search and /cari/* — discovery uses /c/ pages
+        scraper = BlibliScraper(scraper_config)
+        url = scraper._build_search_url("gpu")
+        assert "/c/gpu" in url
+        assert "/search" not in url and "/cari" not in url
 
 
 class TestShopeeScraper:

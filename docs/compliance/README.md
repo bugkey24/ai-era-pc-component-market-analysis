@@ -16,7 +16,7 @@
 | -------- | --------------- | -------------- | ------- | ------- |
 | **Tokopedia** | ✅ Allowed (via `/find/` path) | ✅ Allowed (default-permit) | ✅ **Explicitly allowed** | **Primary platform** — products + reviews |
 | **Shopee** | ⚠️ Letter-of-robots allowed, `Crawl-delay: 1` | ✅ Allowed | ⚠️ Fragment-based, ungoverned | **Risky** — anti-bot/login walls in practice |
-| **Blibli** | ❌ **Disallowed** (`/search`, `/cari/*`) | ✅ Allowed (`/p/*$`) | ❌ **Disallowed** (`/p/*/pr*`) | **Products only, no reviews, no search** |
+| **Blibli** | ❌ **Disallowed** (`/search`, `/cari/*`) | ✅ Allowed (`/p/*$`) | ⚠️ No sanctioned review surface (see correction note) | **Products only, no reviews, no search** |
 
 ---
 
@@ -50,16 +50,28 @@
 | ---------- | ----- | ------ |
 | Search — `/search/{category}` (config) and `/cari/*` | `Disallow: /search` (L39), `Disallow: /search?*` (L40), `Disallow: /cari/*` (L15) | ❌ **Disallowed — stop using search-based discovery** |
 | Product detail — `/p/{slug}-{sku}` | `Allow: /p/*$` (L3) — clean URLs without query strings | ✅ Primary allowed surface |
-| Review pages — `{product}/reviews` | `Disallow: /p/*/pr*` (L54) matches `/p/{slug}/reviews` | ❌ **Disallowed — do not scrape Blibli reviews** |
+| Review pages — `{product}/reviews` | `Disallow: /p/*/pr*` (L54) matches `/p/{slug}/product-reviews`; a literal `/reviews` segment is **not** matched by any rule | ⚠️ Our review URL is an unvalidated guess; the platform publishes no review sitemap and no explicit review `Allow` (contrast Tokopedia) |
 | Discovery | `sitemap: .../blibli-product-curated-1.xml` (L108); category pages `/c/...` not disallowed for `*` | ✅ Use sitemap / category pages instead of search |
 
 **Action:** disable `BlibliReviewScraper` from the active registry path; rework Blibli product discovery to category pages or sitemap entries; respect `/p/*$` (no query params on product URLs).
+
+> **Correction note (2026-09-03, test-driven):** an earlier draft of this
+> table claimed `/p/*/pr*` blocks literal `/reviews` URLs. The RFC 9309
+> engine added in `feature/robots-compliance` proved that wrong — the rule
+> matches `pr…` segments (`product-reviews`), not `re…`. Blibli reviews stay
+> **gated off** (`robots_permitted = False`) on conservative grounds: no
+> sanctioned review surface is known, no explicit `Allow` exists, and the
+> platform may serve review content through disallowed `pr*` paths.
 
 ---
 
 ## Compliance Requirements Going Forward
 
-1. **Programmatic robots check** — every scraper consults `urllib.robotparser` before fetching a URL; disallowed URLs are skipped and logged, never requested.
+1. **Programmatic robots check** — ✅ implemented: `RobotsGuard`
+   (`src/scrapers/robots_guard.py`) runs an RFC 9309 longest-match engine
+   against the snapshots in this directory (live fetch as fallback,
+   fail-closed on unreachable); both scrape loops consult it before every
+   fetch and log+skip disallowed URLs.
 2. **Tokopedia-only reviews** — the review objective (sentiment analysis) is served exclusively by Tokopedia, whose robots explicitly permits reviews.
 3. **Rate limits** — delays stay at or above each platform's `Crawl-delay` (Shopee: ≥1 s; project default 2 s).
 4. **No login-walled content** — robots compliance does not override authentication boundaries.
