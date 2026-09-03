@@ -36,18 +36,34 @@ class AHPProcessor:
     # Matrix construction
     # ------------------------------------------------------------------
 
-    def build_pairwise_matrix(self, comparisons: list[list[float]]) -> AHPProcessor:
-        """Set the pairwise comparison matrix (n × n)."""
+    def build_pairwise_matrix(self, comparisons: list[list[float | str]]) -> AHPProcessor:
+        """Set the pairwise comparison matrix (n × n).
+
+        Accepts numeric values or fraction strings like ``"1/3"`` (YAML parses
+        ``1/3`` as a string, so config-driven matrices arrive in that form).
+        """
         if len(comparisons) != self.n or any(len(row) != self.n for row in comparisons):
             raise ValueError(
                 f"Matrix must be {self.n}×{self.n}. Got {len(comparisons)} rows."
             )
-        self.pairwise_matrix = np.array(comparisons, dtype=float)
+        coerced = [[self._coerce_value(v) for v in row] for row in comparisons]
+        self.pairwise_matrix = np.array(coerced, dtype=float)
         # Validate Saaty scale: diagonal must be 1
         diag = np.diag(self.pairwise_matrix)
         if not np.allclose(diag, 1.0):
             raise ValueError("Diagonal of the pairwise matrix must be all 1.")
         return self
+
+    @staticmethod
+    def _coerce_value(value: float | str) -> float:
+        """Convert numbers and ``'a/b'`` fraction strings to float."""
+        if isinstance(value, (int, float)):
+            return float(value)
+        text = str(value).strip()
+        if "/" in text:
+            num, _, den = text.partition("/")
+            return float(num) / float(den)
+        return float(text)
 
     # ------------------------------------------------------------------
     # Weight calculation
