@@ -10,6 +10,22 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- **Live scraping validated (Tokopedia)** — 119 products across
+  gpu/ram/ssd from single-page runs (8 requests total, robots-guarded,
+  ≥2 s apart). Full findings in
+  `docs/compliance/live-validation-2026-09-03.md`.
+- Tokopedia scrapers (products + reviews) now parse the server-rendered
+  Apollo cache (`window.__cache`) instead of guessed DOM selectors —
+  richer fields: numeric price, `original_price`, discount %, review
+  count, shop city, clean product URL (tracking params stripped).
+- Chip-level `search_keywords` (rtx/ddr5/nvme) + breadcrumb filter
+  (live-verified taxonomy: `vga-card`, `ram-komputer`,
+  `media-penyimpanan-data/ssd`) + accessory/laptop exclusion patterns.
+- `DataPreprocessor.nullify_unrated_ratings()` — Tokopedia serves
+  `rating=5.0, review_count=0` for unrated products; those defaults are
+  nullified before DSS scoring.
+- Review schema extended with `review_id` + `user_name`;
+  `fetch_reviews` now enforces exact schema column order.
 - **Robots.txt compliance layer** (`RobotsGuard`,
   `src/scrapers/robots_guard.py`) — RFC 9309 longest-match engine
   (replaces `urllib.robotparser`, which drops query strings and

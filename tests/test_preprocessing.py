@@ -79,6 +79,20 @@ class TestNormalizeRatings:
         assert result.loc[0, "rating"] == pytest.approx(2.5)
 
 
+class TestNullifyUnratedRatings:
+    def test_unrated_default_rating_becomes_nan(self):
+        # Live finding: Tokopedia serves rating=5.0 with review_count=0
+        df = pd.DataFrame({"rating": [5.0, 4.2], "review_count": [0, 12]})
+        result = DataPreprocessor(df).nullify_unrated_ratings().get_cleaned_data()
+        assert pd.isna(result.loc[0, "rating"])
+        assert result.loc[1, "rating"] == pytest.approx(4.2)
+
+    def test_missing_columns_noop(self):
+        df = pd.DataFrame({"rating": [5.0]})
+        result = DataPreprocessor(df).nullify_unrated_ratings().get_cleaned_data()
+        assert result.loc[0, "rating"] == 5.0
+
+
 class TestChaining:
     def test_full_chain(self, sample_products):
         result = (

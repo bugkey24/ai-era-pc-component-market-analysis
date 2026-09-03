@@ -30,6 +30,7 @@ class BaseScraper(ABC):
         self.delay: float = config.get("delay", 2.0)
         self.logger = logging.getLogger(f"scraper.{self.platform_name}")
         self.robots_guard = RobotsGuard(config.get("robots", {}))
+        self._current_category: str = ""  # set by scrape() for context-aware parsing
 
     # ------------------------------------------------------------------
     # Abstract methods — each platform MUST implement these
@@ -62,6 +63,7 @@ class BaseScraper(ABC):
     def scrape(self, category: str, max_pages: int = 5) -> pd.DataFrame:
         """Run the full scrape loop and return a DataFrame of products."""
         self.logger.info("Starting scrape for %s on %s", category, self.platform_name)
+        self._current_category = category
         products: list[dict[str, Any]] = []
         url = self._build_search_url(category)
 

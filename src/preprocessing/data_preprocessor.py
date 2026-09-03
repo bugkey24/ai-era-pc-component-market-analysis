@@ -153,6 +153,24 @@ class DataPreprocessor:
             self.df[column] = (self.df[column] / col_max) * max_scale
         return self
 
+    def nullify_unrated_ratings(
+        self, rating_col: str = "rating", review_col: str = "review_count"
+    ) -> DataPreprocessor:
+        """Treat ratings as missing when a product has no reviews.
+
+        Live finding (Tokopedia, 2026-09): unrated products carry a
+        default ``rating = 5.0`` with ``review_count = 0``. Trusting that
+        default would inflate the DSS rating criterion, so unrated
+        ratings are set to NaN.
+        """
+        if rating_col not in self.df.columns or review_col not in self.df.columns:
+            return self
+        unrated = self.df[review_col].fillna(0) <= 0
+        before = self.df.loc[unrated, rating_col].notna().sum()
+        self.df.loc[unrated, rating_col] = np.nan
+        logger.info("nullify_unrated_ratings: %d default ratings set to NaN", before)
+        return self
+
     # ------------------------------------------------------------------
     # Output
     # ------------------------------------------------------------------
