@@ -114,8 +114,35 @@ def scrape_shopee(category):
 **Structure:**
 
 ```
-URL: https://www.blibli.com/search/gpu
-HTML: div.product-item
-Price: span.price-value
-Similar to Tokopedia (static HTML)
+URL: https://www.blibli.com/c/{category}     (robots-allowed category pages)
+Product detail: /p/{slug}-{sku}              (allowed, no query params)
+Search: NOT PERMITTED — /search and /cari/* are robots-disallowed
+Reviews: NOT SANCTIONED — no allowed review surface; scraper gated off
 ```
+
+---
+
+## Review Collection (Tokopedia-first)
+
+Reviews feed the sentiment phase. **Only Tokopedia's robots.txt explicitly
+permits review crawling** (`Allow: /*/review`, plus a published
+`review-index.xml` sitemap) — see [`compliance/README.md`](./compliance/README.md).
+
+**Review schema** (`REVIEW_SCHEMA`, shared by all review scrapers):
+
+```python
+{
+    'product_id': 'string',
+    'review_text': 'string',
+    'rating': 'float (0-5)',
+    'review_date': 'string (platform format)',
+    'helpful_count': 'integer',
+    'source': 'platform name'
+}
+```
+
+Scraped reviews are saved as `data/raw/reviews_{platform}_{category}.csv`;
+the pipeline's sentiment phase auto-loads them (`reviews_*.csv` glob) and
+trains via rating-derived weak supervision (≥4 → positive, ≤2 → negative,
+else neutral). For production-grade accuracy, replace with hand-labelled
+reviews.

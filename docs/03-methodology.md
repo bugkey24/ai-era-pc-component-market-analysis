@@ -13,6 +13,12 @@
 
 ## Phase 1: Web Scraping
 
+> **Compliance status:** implemented — every fetch passes through
+> `RobotsGuard` (RFC 9309, fail-closed; see `src/scrapers/robots_guard.py`
+> and `docs/compliance/README.md`). Tokopedia search uses the robots-allowed
+> `/find/{category}?page=N` surface; Blibli discovery uses `/c/` category
+> pages; retry with exponential backoff is implemented in the review scrapers.
+
 ### Scraping Strategy
 
 1. **Category Search:** Use platform search with category filters
@@ -230,6 +236,12 @@ C_i = S_minus / (S_plus + S_minus)
 ---
 
 ## Phase 6: Price Normalization Prediction
+
+> **Implementation status:** built — `NormalizationPredictor`
+> (`src/analysis/normalization_predictor.py`) implements the scenario model
+> below (bull = aggressive AI investment/highest projected price; bear =
+> bubble burst/earliest normalization) with the regression formula in C.
+> The pipeline runs it as Phase 6 and persists `outputs/prediction.json`.
 
 ### Scenario Modeling
 
