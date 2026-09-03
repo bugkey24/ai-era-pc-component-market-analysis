@@ -121,6 +121,8 @@ annotated config.
 | ------- | ----- | --- |
 | `ModuleNotFoundError: src` when running scripts | project root not on `sys.path` | run from the repo root, or `sys.path.insert(0, project_root)` |
 | `NameError: PipelineOrchestrator` in the notebook | Option B ran before the import cell | fixed in v1.2.2 — the cell is now self-contained; otherwise run cells top-to-bottom |
+| Colab runs **old repo code** after a new release | `git clone` fails silently when the directory already exists (re-used runtime / Drive state) | fixed in v1.2.3 — cell 1 pulls instead of failing; verify with the printed `repo commit:` hash |
+| Section 6 crashes with `Cannot describe a DataFrame without columns` after running Option B | a 0-row live scrape overwrote the working dataset | fixed in v1.2.3 — `try_live_scrape()` is guarded and never replaces `data` on empty results; default is commented out |
 | Tokopedia `Read timed out` **from Colab** (every page) | datacenter-IP throttling — Tokopedia slow-walls Google cloud IPs | expected; the scrapers now retry 3× with backoff, but reliable collection needs a residential IP (our validated runs). Analysis mode needs no scraping at all |
 | Shopee `session not created: Chrome instance exited` **from Colab** | Colab has no Chrome browser | `!apt-get -qq update && !apt-get -qq install chromium chromium-driver`, then point Selenium at `/usr/bin/chromium`. Shopee remains deferred regardless (anti-bot risk) |
 | Blibli `403 Forbidden` **from Colab** | WAF blocks datacenter IPs | expected; Blibli's products-only path needs a residential IP and is unvalidated live by design |

@@ -6,6 +6,29 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [1.2.3] - 2026-09-03
+
+### Fixed
+
+Two defects surfaced by a user's Colab Option B run:
+
+- **Stale clone:** cell 1's `git clone` failed silently when the target
+  directory already existed (re-used runtime / Drive state), so runs kept
+  executing old repo code. Cell 1 now pulls when the clone exists and
+  prints the checked-out commit hash for verification.
+- **Dataset poisoning:** a 0-row live scrape overwrote the working `data`
+  frame, crashing section 6 (`Cannot describe a DataFrame without
+  columns`). Option B is now a guarded `try_live_scrape()` — empty
+  results never replace the dataset — and is **commented out by
+  default**, so *Run all* performs pure analysis on the snapshot.
+
+### Changed
+
+- Notebook re-executed headless: 23 cells, zero errors, 247-row snapshot
+  confirmed as the data source.
+
+---
+
 ## [1.2.2] - 2026-09-03
 
 ### Context
