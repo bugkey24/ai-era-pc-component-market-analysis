@@ -5,7 +5,7 @@ from __future__ import annotations
 import logging
 import time
 from abc import ABC, abstractmethod
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import pandas as pd
 
@@ -15,7 +15,7 @@ class BaseScraper(ABC):
 
     platform_name: str  # subclasses MUST set this
 
-    def __init__(self, config: Dict[str, Any]) -> None:
+    def __init__(self, config: dict[str, Any]) -> None:
         self.config = config
         self.headers = {
             "User-Agent": config.get(
@@ -37,11 +37,11 @@ class BaseScraper(ABC):
         """Return the raw HTML of *url*."""
 
     @abstractmethod
-    def parse_product(self, element: Any) -> Dict[str, Any]:
+    def parse_product(self, element: Any) -> dict[str, Any]:
         """Extract a product dictionary from a single HTML element."""
 
     @abstractmethod
-    def get_next_page_url(self, current_url: str) -> Optional[str]:
+    def get_next_page_url(self, current_url: str) -> str | None:
         """Return the URL of the next page, or ``None`` if no more pages."""
 
     @abstractmethod
@@ -52,14 +52,14 @@ class BaseScraper(ABC):
     # Concrete helpers
     # ------------------------------------------------------------------
 
-    def _extract_items(self, html: str) -> List[Any]:
+    def _extract_items(self, html: str) -> list[Any]:
         """Override in subclasses to pull product elements from *html*."""
         raise NotImplementedError
 
     def scrape(self, category: str, max_pages: int = 5) -> pd.DataFrame:
         """Run the full scrape loop and return a DataFrame of products."""
         self.logger.info("Starting scrape for %s on %s", category, self.platform_name)
-        products: List[Dict[str, Any]] = []
+        products: list[dict[str, Any]] = []
         url = self._build_search_url(category)
 
         for page in range(1, max_pages + 1):

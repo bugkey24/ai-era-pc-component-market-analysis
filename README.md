@@ -5,6 +5,9 @@
   <img src="https://img.shields.io/badge/Python-3.8+-yellow?style=for-the-badge&logo=python&logoColor=white" alt="Python Badge" />
   <img src="https://img.shields.io/badge/Platform-Google%20Colab-orange?style=for-the-badge&logo=googlecolab&logoColor=white" alt="Colab Badge" />
   <img src="https://img.shields.io/badge/License-MIT--Next-green?style=for-the-badge" alt="License Badge" />
+  <a href="https://github.com/bugkey24/ai-era-pc-component-market-analysis/actions/workflows/ci.yml">
+    <img src="https://img.shields.io/github/actions/workflow/status/bugkey24/ai-era-pc-component-market-analysis/ci.yml?branch=main&style=for-the-badge&label=CI" alt="CI Status" />
+  </a>
   <a href="https://github.com/bugkey24/ai-era-pc-component-market-analysis">
     <img src="https://img.shields.io/github/stars/bugkey24/ai-era-pc-component-market-analysis?style=for-the-badge&logo=github" alt="GitHub Stars" />
   </a>

@@ -4,9 +4,9 @@ from __future__ import annotations
 
 import logging
 from pathlib import Path
-from typing import Optional
 
 import matplotlib
+
 matplotlib.use("Agg")  # non-interactive backend — safe for Colab / headless
 import matplotlib.pyplot as plt
 import numpy as np
@@ -37,13 +37,29 @@ class Visualizer:
         self.df = df
         self.output_dir = Path(output_dir)
         self.output_dir.mkdir(parents=True, exist_ok=True)
-        self.style = style
+        self.style = self._resolve_style(style)
         self.palette = palette
         self.figsize = figsize
         self.dpi = dpi
 
         sns.set_theme(style=self.style)
         plt.rcParams.update({"figure.figsize": self.figsize, "figure.dpi": self.dpi})
+
+    @staticmethod
+    def _resolve_style(style: str) -> str:
+        """Normalise legacy matplotlib style names to current seaborn styles.
+
+        Newer seaborn releases dropped the ``seaborn-v0_8-*`` aliases, so
+        ``seaborn-v0_8-darkgrid`` → ``darkgrid``. Unknown styles fall back to
+        ``darkgrid``.
+        """
+        if style in {"white", "dark", "whitegrid", "darkgrid", "ticks"}:
+            return style
+        for candidate in ("darkgrid", "whitegrid", "dark", "white", "ticks"):
+            if style.endswith(candidate):
+                return candidate
+        logger.warning("Unknown style '%s' — falling back to 'darkgrid'", style)
+        return "darkgrid"
 
     # ------------------------------------------------------------------
     # 1. Price trends
@@ -57,7 +73,8 @@ class Visualizer:
             logger.warning("No 'category' column — skipping price_trends")
             return fig
 
-        sns.boxplot(data=self.df, x="category", y="price", palette=self.palette, ax=ax)
+        sns.boxplot(data=self.df, x="category", y="price", hue="category",
+                    palette=self.palette, legend=False, ax=ax)
         ax.set_title("Price Distribution by Component Category", fontsize=14)
         ax.set_xlabel("Category")
         ax.set_ylabel("Price (IDR)")
@@ -106,7 +123,8 @@ class Visualizer:
         """Horizontal bar chart of TOPSIS scores."""
         fig, ax = plt.subplots()
         top = ranking_df.head(10)
-        sns.barplot(data=top, x="Score", y="Alternative", palette="viridis", ax=ax)
+        sns.barplot(data=top, x="Score", y="Alternative", hue="Alternative",
+                    palette="viridis", legend=False, ax=ax)
         ax.set_title("TOPSIS Ranking — Top Alternatives", fontsize=14)
         ax.set_xlabel("Relative Closeness Score")
         ax.set_ylabel("Alternative Index")

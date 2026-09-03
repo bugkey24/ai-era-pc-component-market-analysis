@@ -1,0 +1,56 @@
+[build-system]
+requires = ["setuptools>=69.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ai-era-pc-market-analysis"
+version = "1.0.0"
+description = "Decision Support System for hardware procurement in the AI era (scraping, sentiment, AHP-TOPSIS)"
+readme = "README.md"
+license = { file = "LICENSE" }
+requires-python = ">=3.9"
+authors = [{ name = "bugkey24" }]
+keywords = ["scraping", "sentiment-analysis", "ahp", "topsis", "decision-support"]
+
+[tool.setuptools.packages.find]
+include = ["src*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+addopts = "-q --strict-markers"
+filterwarnings = [
+    # seaborn-internal matplotlib deprecations — out of our control
+    "ignore::DeprecationWarning:seaborn.*",
+    "ignore::UserWarning:seaborn.*",
+]
+
+[tool.coverage.run]
+source = ["src"]
+omit = ["src/__init__.py"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py39"
+exclude = [".venv", "data", "outputs", "logs"]
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "I",   # isort
+    "B",   # flake8-bugbear
+    "UP",  # pyupgrade
+]
+ignore = [
+    "E501", # line length handled by formatter where possible
+]
+
+[tool.ruff.lint.per-file-ignores]
+# Tests use fixtures/asserts freely; noqa needed for deliberate magic values
+"tests/*" = ["B011"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"

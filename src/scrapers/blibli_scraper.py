@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import re
-from typing import Any, Dict, Optional
+from typing import Any
 
 import requests
 from bs4 import BeautifulSoup, Tag
@@ -29,7 +29,7 @@ class BlibliScraper(BaseScraper):
         resp.raise_for_status()
         return resp.text
 
-    def get_next_page_url(self, current_url: str) -> Optional[str]:
+    def get_next_page_url(self, current_url: str) -> str | None:
         match = re.search(r"[?&]page=(\d+)", current_url)
         if not match:
             return None
@@ -43,7 +43,7 @@ class BlibliScraper(BaseScraper):
         soup = BeautifulSoup(html, "lxml")
         return soup.find_all("div", class_="product-card")
 
-    def parse_product(self, element: Tag) -> Dict[str, Any]:
+    def parse_product(self, element: Tag) -> dict[str, Any]:
         return {
             "product_id": element.get("data-pid", ""),
             "name": self._safe_text(element, ".product-card__name"),

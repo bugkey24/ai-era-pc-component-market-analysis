@@ -4,9 +4,8 @@ from __future__ import annotations
 
 import logging
 import re
-from typing import Any, Dict, List, Optional
+from typing import Any
 
-import numpy as np
 import pandas as pd
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics import classification_report
@@ -17,9 +16,30 @@ from sklearn.svm import LinearSVC
 logger = logging.getLogger("analysis.sentiment")
 
 
+def _load_nltk_stopwords(language: str) -> list[str] | None:
+    """Try to load NLTK stopwords for *language*; return None if unavailable."""
+    try:
+        import nltk
+
+        try:
+            from nltk.corpus import stopwords as nltk_stopwords
+
+            return list(nltk_stopwords.words(language))
+        except LookupError:
+            # Corpus not downloaded yet — attempt a quiet download, then retry
+            nltk.download("stopwords", quiet=True)
+            from nltk.corpus import stopwords as nltk_stopwords
+
+            return list(nltk_stopwords.words(language))
+    except Exception:  # noqa: BLE001 — offline environments fall back gracefully
+        logger.info("NLTK stopwords unavailable for '%s' — using built-in list", language)
+        return None
+
+
 class SentimentAnalyzer:
     """SVM-based sentiment classifier with aspect-based analysis."""
 
+    # Built-in fallback stopwords (used when the NLTK corpus is unavailable)
     _STOPWORDS_ID = [
         "yang", "dan", "di", "ini", "itu", "untuk", "dengan", "pada",
         "adalah", "ke", "dari", "tidak", "akan", "juga", "sudah", "ada",
@@ -43,12 +63,30 @@ class SentimentAnalyzer:
         self.model = LinearSVC(class_weight="balanced", random_state=42, max_iter=1000)
         self.label_encoder = LabelEncoder()
         self.is_trained = False
-        self.accuracy: Optional[float] = None
-        self.report: Optional[Dict[str, Any]] = None
+        self.accuracy: float | None = None
+        self.report: dict[str, Any] | None = None
+        self._stopword_cache: set[str] | None = None
 
     # ------------------------------------------------------------------
     # Text preprocessing
     # ------------------------------------------------------------------
+
+    def _get_stopwords(self) -> set[str]:
+        """Return the combined stopword set, preferring NLTK corpora."""
+        if self._stopword_cache is not None:
+            return self._stopword_cache
+
+        nltk_id = _load_nltk_stopwords("indonesian")
+        nltk_en = _load_nltk_stopwords("english")
+
+        stop = set(self._STOPWORDS_ID + self._STOPWORDS_EN)
+        if nltk_id:
+            stop.update(w for w in nltk_id if w.isalpha())
+        if nltk_en:
+            stop.update(w for w in nltk_en if w.isalpha())
+
+        self._stopword_cache = stop
+        return stop
 
     def preprocess_text(self, text: str) -> str:
         """Clean, lowercase, remove non-alpha chars, strip stopwords."""
@@ -59,7 +97,7 @@ class SentimentAnalyzer:
         text = re.sub(r"[^a-z\s]", " ", text)
         tokens = text.split()
 
-        stop_words = set(self._STOPWORDS_ID + self._STOPWORDS_EN)
+        stop_words = self._get_stopwords()
         tokens = [t for t in tokens if t not in stop_words and len(t) > 1]
         return " ".join(tokens)
 
@@ -69,8 +107,8 @@ class SentimentAnalyzer:
 
     def train(
         self,
-        texts: List[str],
-        labels: List[str],
+        texts: list[str],
+        labels: list[str],
         test_size: float = 0.2,
     ) -> SentimentAnalyzer:
         """Train the SVM classifier and evaluate on a held-out split."""
@@ -79,7 +117,7 @@ class SentimentAnalyzer:
         processed = [self.preprocess_text(t) for t in texts]
         valid_mask = [bool(p.strip()) for p in processed]
         processed = [p for p, v in zip(processed, valid_mask) if v]
-        labels = [l for l, v in zip(labels, valid_mask) if v]
+        labels = [lab for lab, v in zip(labels, valid_mask) if v]
 
         if len(processed) < 10:
             raise ValueError("Too few valid samples after preprocessing")
@@ -106,7 +144,7 @@ class SentimentAnalyzer:
     # Prediction
     # ------------------------------------------------------------------
 
-    def predict(self, texts: List[str]) -> List[str]:
+    def predict(self, texts: list[str]) -> list[str]:
         """Predict sentiment labels for new texts."""
         if not self.is_trained:
             raise ValueError("Model not trained yet. Call train() first.")
@@ -120,13 +158,13 @@ class SentimentAnalyzer:
     # ------------------------------------------------------------------
 
     def aspect_sentiment(
-        self, texts: List[str], aspects: Dict[str, List[str]]
-    ) -> Dict[str, Dict[str, float]]:
+        self, texts: list[str], aspects: dict[str, list[str]]
+    ) -> dict[str, dict[str, float]]:
         """Run sentiment per aspect (keyword-filtered)."""
         if not self.is_trained:
             raise ValueError("Model not trained yet.")
 
-        results: Dict[str, Dict[str, float]] = {}
+        results: dict[str, dict[str, float]] = {}
         all_preds = self.predict(texts)
         lower_texts = [t.lower() for t in texts]
 

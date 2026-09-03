@@ -6,6 +6,45 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [1.1.0] - 2026-09-03
+
+### Added
+
+- Full pytest suite — **90 tests** across AHP, TOPSIS, preprocessing, feature
+  engineering, sentiment, scrapers (offline HTML parsing), visualizer
+  (headless), and utils. Coverage of error paths and edge cases.
+- `pyproject.toml` — project metadata, pytest config, ruff lint + format rules.
+- `.pre-commit-config.yaml` — whitespace/yaml checks, ruff fix + format.
+- GitHub Actions CI (`.github/workflows/ci.yml`) — ruff lint job + pytest with
+  coverage gate (≥70%) on Python 3.10/3.11/3.12; CI badge on README.
+- `notebooks/main_pipeline.ipynb` — 11-section Colab notebook covering the
+  complete pipeline, **verified by headless execution**; includes an offline
+  sample-data generator and a demo sentiment training set.
+- `SentimentAnalyzer` now prefers NLTK stopwords (indonesian + english) with a
+  graceful fallback to built-in lists when the corpus is unavailable.
+
+### Fixed
+
+- `requirements.txt`: added missing `scipy` (imported by
+  `StatisticalAnalyzer` — hard crash before); removed unused
+  `webdriver-manager`, `plotly`, `tqdm`.
+- `AHPProcessor.build_pairwise_matrix`: accepts `"a/b"` fraction strings —
+  YAML parses `1/3` as a *string*, so the config-driven pairwise matrix
+  previously crashed on float conversion. Covered by regression tests.
+- `TokopediaScraper.get_next_page_url`: appended `page=2` on first pagination
+  step (previously returned `None` because no `page` param existed yet).
+- `Visualizer`: resolves legacy `seaborn-v0_8-*` style names to current
+  seaborn styles (dropped in seaborn ≥0.14); fixed palette-without-hue
+  deprecation warnings.
+- CHANGELOG: corrected `handle_missing` description to match implementation.
+
+### Changed
+
+- Modernized typing to PEP 585/604 (`list[str]`, `X | None`) across `src/`
+  and `tests/`; removed 5 unused imports (ruff-clean: 0 findings).
+
+---
+
 ## [1.0.0] - 2026-09-03
 
 ### Added
@@ -38,7 +77,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - `SentimentAnalyzer.preprocess_text` — added null/empty string guard.
 - `SentimentAnalyzer.train` — filters empty strings before TF-IDF vectorization.
 - `DataPreprocessor.remove_outliers` — added `std == 0` guard.
-- `DataPreprocessor.handle_missing` — added `numeric_only=True` to `median()`.
+- `DataPreprocessor.handle_missing` — restricted fill to numeric columns via `select_dtypes(include=np.number)` before `median()`.
 
 ### Removed
 
