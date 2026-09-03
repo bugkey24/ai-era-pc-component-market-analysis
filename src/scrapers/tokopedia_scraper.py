@@ -107,6 +107,7 @@ class TokopediaScraper(BaseScraper):
             "rating": float(element.get("rating") or 0.0),
             "review_count": int(meta.get("countReview") or 0),
             "seller_name": shop.get("name", ""),
+            "seller_tier": int(shop.get("tier") or 0),  # shop programme tier (reliability proxy)
             "location": shop.get("city", ""),
         }
 

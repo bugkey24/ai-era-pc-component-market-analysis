@@ -120,6 +120,7 @@ class TestTokopediaCacheParsing:
             f"SearchProductV5Shop{pid}": {
                 "name": f"Toko {pid}",
                 "city": "Jakarta Pusat",
+                "tier": 2,
                 "__typename": "SearchProductV5Shop",
             },
             f"$searchProductV5Product{pid}.meta": {
@@ -178,6 +179,7 @@ class TestTokopediaCacheParsing:
         assert product["rating"] == 4.8
         assert product["review_count"] == 120
         assert product["seller_name"] == "Toko 1001"
+        assert product["seller_tier"] == 2
         assert product["location"] == "Jakarta Pusat"
         assert "extParam" not in product["url"]  # tracking params stripped
 
