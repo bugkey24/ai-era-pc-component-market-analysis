@@ -153,7 +153,9 @@ class TestBlibliParsing:
 class TestShopeeScraper:
     def test_build_search_url(self, scraper_config):
         scraper = ShopeeScraper(scraper_config)
-        assert "keyword=gpu" in scraper._build_search_url("gpu")
+        url = scraper._build_search_url("gpu")
+        # Regression: config base_url is the bare domain — /search must not be lost
+        assert url.endswith("/search?keyword=gpu")
 
     def test_driver_lazy_init(self, scraper_config):
         scraper = ShopeeScraper(scraper_config)

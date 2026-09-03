@@ -30,8 +30,8 @@ class ShopeeScraper(BaseScraper):
     # ------------------------------------------------------------------
 
     def _build_search_url(self, category: str) -> str:
-        base = self.config.get("base_url", "https://shopee.co.id/search")
-        return f"{base}?keyword={category}"
+        base = self.config.get("base_url", "https://shopee.co.id")
+        return f"{base}/search?keyword={category}"
 
     def fetch_page(self, url: str) -> str:
         if self.driver is None:
