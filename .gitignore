@@ -1,0 +1,59 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+*.egg
+dist/
+build/
+.eggs/
+*.whl
+
+# Virtual environments
+venv/
+env/
+.venv/
+.env/
+
+# Jupyter / Colab
+.ipynb_checkpoints/
+*.ipynb_checkpoints/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Data (large files — track structure only)
+data/raw/*.csv
+data/processed/*.csv
+*.parquet
+
+# Logs
+logs/
+*.log
+
+# Outputs (generated — do not track)
+outputs/visualizations/*.png
+outputs/visualizations/*.jpg
+outputs/visualizations/*.svg
+outputs/*.csv
+outputs/*.json
+
+# Environment / secrets
+.env
+.env.local
+config_local.yaml
+
+# Selenium / WebDriver
+*.exe
+chromedriver/
+geckodriver/

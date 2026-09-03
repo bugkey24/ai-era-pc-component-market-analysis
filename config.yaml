@@ -1,0 +1,74 @@
+project:
+  name: "AI-Driven Market Analysis"
+  version: "1.0"
+  environment: "google-colab"
+
+scraping:
+  categories:
+    - gpu
+    - ram
+    - ssd
+  max_pages: 5
+  delay: 2.0
+  retry_count: 3
+  timeout: 10
+  user_agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+  platforms:
+    - name: tokopedia
+      enabled: true
+      method: static
+      base_url: "https://www.tokopedia.com/search"
+    - name: shopee
+      enabled: true
+      method: dynamic
+      base_url: "https://shopee.co.id/search"
+    - name: blibli
+      enabled: true
+      method: static
+      base_url: "https://www.blibli.com/search"
+
+preprocessing:
+  handle_missing: "drop"
+  outlier_threshold: 3.0
+  normalize_ratings: true
+
+sentiment:
+  language: "indonesian"
+  model: "LinearSVC"
+  test_size: 0.2
+  random_state: 42
+  max_features: 5000
+
+dss:
+  criteria:
+    - "price"
+    - "performance"
+    - "rating"
+    - "seller_reliability"
+    - "sentiment"
+    - "future_value"
+  criteria_types:
+    - "cost"
+    - "benefit"
+    - "benefit"
+    - "benefit"
+    - "benefit"
+    - "benefit"
+  pairwise_matrix:
+    - [1, 1/3, 3, 5, 5, 3]
+    - [3, 1, 5, 7, 7, 5]
+    - [1/3, 1/5, 1, 3, 3, 1/3]
+    - [1/5, 1/7, 1/3, 1, 1, 1/5]
+    - [1/5, 1/7, 1/3, 1, 1, 1/5]
+    - [1/3, 1/5, 3, 5, 5, 1]
+
+visualization:
+  style: "seaborn-v0_8-darkgrid"
+  palette: "viridis"
+  figsize: [12, 8]
+  dpi: 150
+
+logging:
+  level: "INFO"
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  file: "logs/pipeline.log"
