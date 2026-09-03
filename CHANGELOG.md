@@ -6,7 +6,17 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
-## [Unreleased]
+## [1.2.0] - 2026-09-03
+
+### Release highlights
+
+- **Live-validated end to end**: 247 products (3 pages × gpu/ram/ssd) and a
+  42-review corpus collected from Tokopedia in ~30 rate-limited,
+  robots-guarded requests; every phase of the pipeline executed on this
+  real data (see `docs/compliance/final-validation-v1-2-0.md`).
+- Full success-criteria validation against docs/05 with honest reporting
+  of deferred items (sentiment accuracy needs a labelled corpus; seller
+  metrics need detail-page enrichment).
 
 ### Added
 
@@ -67,6 +77,8 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Documentation
 
+- `docs/compliance/final-validation-v1-2-0.md` — success-criteria
+  validation against docs/05 (technical + analytical), limitations ledger.
 - `docs/02-architecture.md` synced to current state: review-scraping layer,
   `RobotsGuard`, `NormalizationPredictor`, 7-phase orchestrator, real file
   structure (tests/, CI, compliance dir), corrected dependency list.
