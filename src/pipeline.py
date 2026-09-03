@@ -14,7 +14,7 @@ from src.analysis import (
     StatisticalAnalyzer,
 )
 from src.dss import AHPProcessor, TOPSISProcessor
-from src.preprocessing import DataPreprocessor
+from src.preprocessing import DataPreprocessor, FeatureEngineer
 from src.scrapers import get_scraper
 from src.utils import load_config, setup_logger
 from src.visualization import Visualizer
@@ -114,13 +114,22 @@ class PipelineOrchestrator:
 
     def _run_preprocessing(self) -> pd.DataFrame:
         pre_cfg = self.config.get("preprocessing", {})
-        return (
+        cleaned = (
             DataPreprocessor(self.data)
             .clean_prices()
             .handle_missing(strategy=pre_cfg.get("handle_missing", "drop"))
             .extract_specifications()
+            .nullify_unrated_ratings()
             .remove_outliers(threshold=pre_cfg.get("outlier_threshold", 3.0))
             .get_cleaned_data()
+        )
+        engineer = FeatureEngineer(cleaned)
+        return (
+            engineer.create_price_per_gb()
+            .create_weighted_rating()
+            .create_seller_trust_score()
+            .create_discount_depth()
+            .get_engineered_data()
         )
 
     def _run_statistics(self) -> dict:
@@ -214,21 +223,28 @@ class PipelineOrchestrator:
         return topsis.rank()
 
     def _prepare_decision_matrix(self, criteria: list[str]) -> pd.DataFrame:
-        """Map data columns to the criteria defined in config.
+        """Map config criteria to available data columns.
 
-        Returns an m × n numpy array.
+        Documented proxies (see docs/compliance/final-validation):
+        - ``performance`` → ``rating`` (no benchmark data)
+        - ``seller_reliability`` → ``seller_tier`` (Tokopedia shop tier;
+          falls back to ``seller_trust`` which is 0 without seller metrics)
+        - ``sentiment`` → per-product positive-review rate (0 = no reviews)
+        - ``future_value`` → ``price_per_gb`` (value-per-capacity proxy)
         """
         col_map = {
             "price": "price",
-            "performance": "rating",  # proxy
-            "rating": "weighted_rating",  # if available, else rating
-            "seller_reliability": "seller_trust",
-            "sentiment": "sentiment_score",  # placeholder
-            "future_value": "price_per_gb",  # proxy
+            "performance": "rating",
+            "rating": "weighted_rating",
+            "seller_reliability": "seller_tier",
+            "sentiment": "sentiment_score",
+            "future_value": "price_per_gb",
         }
         matrix_data: dict[str, pd.Series] = {}
         for c in criteria:
             src_col = col_map.get(c, c)
+            if src_col not in self.data.columns and c == "seller_reliability":
+                src_col = "seller_trust"  # pre-tier fallback
             if src_col in self.data.columns:
                 matrix_data[c] = pd.to_numeric(self.data[src_col], errors="coerce").fillna(0)
             else:

@@ -6,7 +6,17 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
-## [Unreleased]
+## [1.2.0] - 2026-09-03
+
+### Release highlights
+
+- **Live-validated end to end**: 247 products (3 pages × gpu/ram/ssd) and a
+  42-review corpus collected from Tokopedia in ~30 rate-limited,
+  robots-guarded requests; every phase of the pipeline executed on this
+  real data (see `docs/compliance/final-validation-v1-2-0.md`).
+- Full success-criteria validation against docs/05 with honest reporting
+  of deferred items (sentiment accuracy needs a labelled corpus; seller
+  metrics need detail-page enrichment).
 
 ### Added
 
@@ -58,6 +68,21 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   (≥4 → positive, ≤2 → negative, else neutral); per-product positive-rate
   is merged back as `sentiment_score`.
 
+### Changed
+
+- `_run_preprocessing` now runs the full FeatureEngineer chain — previously
+  `weighted_rating`/`seller_trust`/`price_per_gb` never existed at pipeline
+  level and the DSS silently zero-filled them. `create_discount_depth`
+  wired in (data available since `original_price` capture).
+- `seller_tier` (Tokopedia shop programme tier) collected as the
+  `seller_reliability` criterion proxy, with fallback to `seller_trust`.
+- `SentimentAnalyzer.train`: single-class corpora fail fast (a classifier
+  needs two classes); skewed corpora (min class < 2 — live reality:
+  41 positive / 1 negative) fit on the full data with accuracy reported
+  as not measurable; `classification_report` labels pinned for
+  single-class test splits.
+- Test coverage measured at **82%** (1,481 statements).
+
 - `ShopeeScraper._build_search_url`: regression introduced by the config
   `base_url` change produced `shopee.co.id?keyword=` (missing `/search`
   path); URL construction fixed and locked by a stricter test.
@@ -67,6 +92,8 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Documentation
 
+- `docs/compliance/final-validation-v1-2-0.md` — success-criteria
+  validation against docs/05 (technical + analytical), limitations ledger.
 - `docs/02-architecture.md` synced to current state: review-scraping layer,
   `RobotsGuard`, `NormalizationPredictor`, 7-phase orchestrator, real file
   structure (tests/, CI, compliance dir), corrected dependency list.

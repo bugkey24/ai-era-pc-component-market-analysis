@@ -70,6 +70,23 @@ class TestTraining:
         with pytest.raises(ValueError, match="Too few"):
             analyzer.train(["bagus"], ["positive"])
 
+    def test_single_class_corpus_raises(self):
+        # A classifier needs two classes — all-positive corpora cannot train
+        analyzer = SentimentAnalyzer()
+        with pytest.raises(ValueError, match="single class"):
+            analyzer.train(["bagus sekali", "mantap", "puas"] * 8, ["positive"] * 24)
+
+    def test_skewed_corpus_fits_without_accuracy(self):
+        # 41 positive / 1 negative — real Indonesian e-commerce skew
+        texts = ["bagus sekali", "mantap", "puas"] * 13 + ["jelek"]
+        labels = ["positive"] * 39 + ["negative"]
+        analyzer = SentimentAnalyzer()
+        analyzer.train(texts, labels)
+        assert analyzer.is_trained
+        assert analyzer.accuracy is None  # skewed: not measurable
+        preds = analyzer.predict(["barang bagus"])
+        assert len(preds) == 1
+
     def test_train_filters_empty_strings(self, labeled_reviews):
         texts, labels = labeled_reviews
         texts_with_empty = texts + ["", "   "]

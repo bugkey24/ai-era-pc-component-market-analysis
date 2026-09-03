@@ -205,8 +205,30 @@ class SentimentAnalyzer:
         X = self.vectorizer.fit_transform(processed)
         y = self.label_encoder.fit_transform(labels)
 
+        # A classifier needs at least two classes — fail fast otherwise
+        class_counts = pd.Series(y).value_counts()
+        if len(class_counts) < 2:
+            raise ValueError(
+                f"Corpus contains a single class ({class_counts.index[0]!r}) — "
+                "sentiment training is impossible; collect negative reviews too"
+            )
+
+        # Skewed/small corpora (e-commerce reality: ~all positive): train on
+        # the full data without a held-out split — accuracy not measurable
+        if class_counts.min() < 2:
+            logger.warning(
+                "Skewed class distribution %s — fitting on full corpus; "
+                "held-out accuracy is not measurable",
+                class_counts.to_dict(),
+            )
+            self.model.fit(X, y)
+            self.is_trained = True
+            self.accuracy = None
+            self.report = None
+            return self
+
         X_train, X_test, y_train, y_test = train_test_split(
-            X, y, test_size=test_size, random_state=42, stratify=y if len(set(y)) > 1 else None
+            X, y, test_size=test_size, random_state=42, stratify=y
         )
 
         self.model.fit(X_train, y_train)
@@ -215,7 +237,12 @@ class SentimentAnalyzer:
         y_pred = self.model.predict(X_test)
         self.accuracy = float((y_pred == y_test).mean())
         self.report = classification_report(
-            y_test, y_pred, target_names=self.label_encoder.classes_, output_dict=True
+            y_test,
+            y_pred,
+            labels=list(range(len(self.label_encoder.classes_))),
+            target_names=self.label_encoder.classes_,
+            output_dict=True,
+            zero_division=0,
         )
         logger.info("Model trained — accuracy: %.3f", self.accuracy)
         return self
