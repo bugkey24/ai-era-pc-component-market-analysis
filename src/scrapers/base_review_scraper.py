@@ -17,13 +17,16 @@ import requests
 from .robots_guard import RobotsGuard
 
 # Schema fields every review scraper must produce (sentiment-phase contract):
-#   product_id, review_text, rating, review_date, helpful_count, source
+#   product_id, review_id, review_text, rating, review_date,
+#   helpful_count, user_name, source
 REVIEW_SCHEMA = [
     "product_id",
+    "review_id",
     "review_text",
     "rating",
     "review_date",
     "helpful_count",
+    "user_name",
     "source",
 ]
 
@@ -145,5 +148,7 @@ class BaseReviewScraper(ABC):
         df = pd.DataFrame(reviews)
         if not df.empty:
             df = df.drop_duplicates(subset=["review_text", "review_date"]).reset_index(drop=True)
+        # Enforce the schema contract: exact column set and order
+        df = df.reindex(columns=REVIEW_SCHEMA)
         self.logger.info("Collected %d reviews from %s", len(df), self.platform_name)
         return df

@@ -1,5 +1,6 @@
 """Tests for review scrapers — offline, network mocked or absent."""
 
+import json
 from unittest.mock import MagicMock, patch
 
 import pandas as pd
@@ -16,19 +17,54 @@ from src.scrapers import (
     get_review_scraper,
 )
 
-TOKOPEDIA_REVIEWS_HTML = """
-<div data-testid="reviewItem" data-product-id="TPD-001">
-    <div data-testid="lblReview">barang bagus sekali, cepat sampai</div>
-    <span data-testid="ratingStar">5.0</span>
-    <span data-testid="lblReviewDate">2026-08-01</span>
-    <button data-testid="btnHelpful">Berguna (3)</button>
-</div>
-<div data-testid="reviewItem" data-product-id="TPD-001">
-    <div data-testid="lblReview">barang jelek, kecewa</div>
-    <span data-testid="ratingStar">1.0</span>
-    <span data-testid="lblReviewDate">2026-08-02</span>
-</div>
-"""
+
+def _tokopedia_review_cache() -> dict:
+    """Synthetic review-page cache mirroring the live Apollo structure."""
+    return {
+        "$ROOT_QUERY.productrevGetProductReviewList("
+        '{"filterBy":"","limit":10,"page":1,"productID":"TPD-001","sortBy":"informative_score desc"})': {
+            "productID": "TPD-001",
+            "list": [
+                {"type": "id", "id": "reviewListPDPType9001", "typename": "reviewListPDPType"},
+                {"type": "id", "id": "reviewListPDPType9002", "typename": "reviewListPDPType"},
+            ],
+            "hasNext": False,
+            "totalReviews": 2,
+        },
+        "reviewListPDPType9001": {
+            "feedbackID": "9001",
+            "message": "barang bagus sekali, cepat sampai",
+            "productRating": 5,
+            "reviewCreateTimestamp": "5 hari lalu",
+            "user": {"type": "id", "id": "$reviewListPDPType9001.user"},
+            "likeDislike": {"type": "id", "id": "$reviewListPDPType9001.likeDislike"},
+        },
+        "$reviewListPDPType9001.user": {
+            "name": "Andi",
+            "__typename": "reviewReviewUserPDPType",
+        },
+        "$reviewListPDPType9001.likeDislike": {
+            "countLike": 3,
+            "__typename": "reviewLikeDislikePDPType",
+        },
+        "reviewListPDPType9002": {
+            "feedbackID": "9002",
+            "message": "barang jelek, kecewa",
+            "productRating": 1,
+            "reviewCreateTimestamp": "4 hari lalu",
+            "user": None,
+            "likeDislike": None,
+        },
+    }
+
+
+def _tokopedia_reviews_html() -> str:
+    return (
+        "<html><script>window.__cache = "
+        + json.dumps(_tokopedia_review_cache())
+        + ";</script></html>"
+    )
+
 
 BLIBLI_REVIEWS_HTML = """
 <div class="review-card" data-pid="BLI-100">
@@ -98,19 +134,23 @@ class TestFactory:
 class TestTokopediaReviews:
     def test_parses_reviews(self, review_config):
         scraper = TokopediaReviewScraper(review_config)
-        items = scraper._extract_review_items(TOKOPEDIA_REVIEWS_HTML)
+        items = scraper._extract_review_items(_tokopedia_reviews_html())
         assert len(items) == 2
         first = scraper.parse_review(items[0])
+        assert first["review_id"] == "9001"
         assert first["review_text"] == "barang bagus sekali, cepat sampai"
         assert first["rating"] == 5.0
-        assert first["review_date"] == "2026-08-01"
+        assert first["review_date"] == "5 hari lalu"
         assert first["helpful_count"] == 3
+        assert first["user_name"] == "Andi"
 
     def test_missing_fields_default_safely(self, review_config):
         scraper = TokopediaReviewScraper(review_config)
-        item = scraper._extract_review_items(TOKOPEDIA_REVIEWS_HTML)[1]
+        item = scraper._extract_review_items(_tokopedia_reviews_html())[1]
         parsed = scraper.parse_review(item)
         assert parsed["helpful_count"] == 0
+        assert parsed["user_name"] == ""
+        assert parsed["rating"] == 1.0
 
     def test_build_review_url(self, review_config):
         scraper = TokopediaReviewScraper(review_config)
@@ -155,7 +195,7 @@ class TestFetchLoop:
 
     def test_tags_source_and_product_id(self, review_config):
         scraper = TokopediaReviewScraper(review_config)
-        scraper.fetch_page = MagicMock(return_value=TOKOPEDIA_REVIEWS_HTML)
+        scraper.fetch_page = MagicMock(return_value=_tokopedia_reviews_html())
         scraper.get_next_page_url = MagicMock(return_value=None)
 
         df = scraper.fetch_reviews("https://tokopedia.com/shop/gpu-x", product_id="TPD-001")
@@ -166,10 +206,14 @@ class TestFetchLoop:
 
     def test_multi_page_and_delay(self, review_config):
         scraper = TokopediaReviewScraper(review_config)
-        page_1 = TOKOPEDIA_REVIEWS_HTML
-        page_2 = TOKOPEDIA_REVIEWS_HTML.replace("2026-08-01", "2026-07-01").replace(
-            "2026-08-02", "2026-07-02"
-        )
+        page_1 = _tokopedia_reviews_html()
+        page_2_cache = _tokopedia_review_cache()
+        # distinct reviews on page 2 so dedup doesn't collapse them
+        page_2_cache["reviewListPDPType9001"]["feedbackID"] = "9101"
+        page_2_cache["reviewListPDPType9001"]["message"] = "page dua bagus"
+        page_2_cache["reviewListPDPType9002"]["feedbackID"] = "9102"
+        page_2_cache["reviewListPDPType9002"]["message"] = "page dua jelek"
+        page_2 = "<html><script>window.__cache = " + json.dumps(page_2_cache) + ";</script></html>"
         scraper.fetch_page = MagicMock(side_effect=[page_1, page_2])
         scraper.get_next_page_url = MagicMock(
             side_effect=["https://tokopedia.com/shop/gpu-x/review?page=2", None]
@@ -183,7 +227,7 @@ class TestFetchLoop:
     def test_deduplicates_identical_reviews(self, review_config):
         # Same page served twice via pagination → identical reviews → dedup
         scraper = TokopediaReviewScraper(review_config)
-        scraper.fetch_page = MagicMock(return_value=TOKOPEDIA_REVIEWS_HTML)
+        scraper.fetch_page = MagicMock(return_value=_tokopedia_reviews_html())
         scraper.get_next_page_url = MagicMock(
             side_effect=["https://tokopedia.com/shop/gpu-x/review?page=2", None]
         )

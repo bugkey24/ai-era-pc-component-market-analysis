@@ -1,5 +1,6 @@
 """Tests for the RobotsGuard — RFC 9309 semantics via committed snapshots."""
 
+import json
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
@@ -10,19 +11,6 @@ from src.scrapers import RobotsGuard
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 SNAPSHOT_DIR = str(PROJECT_ROOT / "docs" / "compliance" / "robots")
-
-TOKOPEDIA_PRODUCTS_HTML = """
-<div data-testid="divProductWrapper" data-product-id="TPD-001">
-    <span data-testid="productName">NVIDIA RTX 4060 8GB</span>
-    <span data-testid="productPrice">Rp4.500.000</span>
-    <span data-testid="productRating">4.8</span>
-</div>
-<div data-testid="divProductWrapper" data-product-id="TPD-002">
-    <span data-testid="productName">AMD RX 7600</span>
-    <span data-testid="productPrice">Rp4.200.000</span>
-    <span data-testid="productRating">4.6</span>
-</div>
-"""
 
 
 @pytest.fixture
@@ -142,12 +130,27 @@ class TestScrapeLoopIntegration:
     def test_scrape_proceeds_on_allowed_url(self):
         from src.scrapers import TokopediaScraper
 
+        entities = {
+            f"searchProductV5Product{pid}": {
+                "id": pid,
+                "name": f"GPU Card Model {pid}",
+                "url": f"https://www.tokopedia.com/shop/item-{pid}",
+                "rating": "4.8",
+                "price": {"number": 4_500_000, "original": "", "discountPercentage": 0},
+                "shop": {"name": "Toko", "city": "Jakarta"},
+                "meta": {"countReview": 10},
+                "category": {"breadcrumb": "komputer-laptop/komponen-komputer/vga-card"},
+            }
+            for pid in (9001, 9002)
+        }
+        cache_html = f"<html><script>window.__cache = {json.dumps(entities)};</script></html>"
+
         config = {
             "robots": {"enabled": True, "fail_open": False, "snapshot_dir": SNAPSHOT_DIR},
             "delay": 0.0,
         }
         scraper = TokopediaScraper(config)  # _build_search_url now returns /find/gpu?page=1
-        scraper.fetch_page = MagicMock(return_value=TOKOPEDIA_PRODUCTS_HTML)
+        scraper.fetch_page = MagicMock(return_value=cache_html)
         scraper.get_next_page_url = MagicMock(return_value=None)
 
         df = scraper.scrape("gpu", max_pages=1)

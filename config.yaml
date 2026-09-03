@@ -23,6 +23,12 @@ scraping:
       method: static
       base_url: "https://www.tokopedia.com"   # search uses /find/{cat}?page=N (robots-allowed)
       reviews_enabled: true                    # robots explicitly allows /*/review
+      # Bare category words ("gpu") return accessories/books — search
+      # chip-level keywords instead; breadcrumb filter removes the rest
+      search_keywords:
+        gpu: rtx
+        ram: ddr5
+        ssd: nvme
     - name: shopee
       enabled: true
       method: dynamic
