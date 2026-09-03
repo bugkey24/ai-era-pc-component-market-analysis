@@ -6,6 +6,34 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [Unreleased]
+
+### Added
+
+- **Price-normalization prediction module** (`NormalizationPredictor`,
+  `src/analysis/normalization_predictor.py`) — implements methodology
+  Phase 6, which was documented but never built: the regression-based
+  `predict_normalization` model, explicit bull/base/bear scenario
+  definitions (with per-scenario investment/fab drivers matching the
+  documented semantics), probability-weighted `summarize()`.
+- Pipeline Phase 6: runs scenario analysis on the median price and
+  persists `outputs/prediction.json` via `save_results`.
+- **Review-scraping layer** — parallel `BaseReviewScraper` ABC with
+  `TokopediaReviewScraper`, `BlibliReviewScraper`, `ShopeeReviewScraper`
+  (Selenium), `REVIEW_SCRAPER_REGISTRY` + `get_review_scraper()` factory,
+  and a shared review schema (`product_id`, `review_text`, `rating`,
+  `review_date`, `helpful_count`, `source`). Unblocks the sentiment
+  objective: product scrapers alone collect no review text.
+- Retry with exponential backoff for static review fetching
+  (methodology Phase 1, step 4) — verified via mocked-network tests.
+- Review deduplication (same text + date) inside the fetch loop.
+- `PipelineOrchestrator._run_sentiment` now loads `data/raw/reviews_*.csv`
+  when present and trains the SVM via rating-derived weak supervision
+  (≥4 → positive, ≤2 → negative, else neutral); per-product positive-rate
+  is merged back as `sentiment_score`.
+
+---
+
 ## [1.1.0] - 2026-09-03
 
 ### Added
