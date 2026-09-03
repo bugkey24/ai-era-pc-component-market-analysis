@@ -8,7 +8,11 @@ from typing import Any
 
 import pandas as pd
 
-from src.analysis import SentimentAnalyzer, StatisticalAnalyzer
+from src.analysis import (
+    NormalizationPredictor,
+    SentimentAnalyzer,
+    StatisticalAnalyzer,
+)
 from src.dss import AHPProcessor, TOPSISProcessor
 from src.preprocessing import DataPreprocessor
 from src.scrapers import get_scraper
@@ -39,6 +43,7 @@ class PipelineOrchestrator:
         self.data: pd.DataFrame | None = None
         self.stats: dict[str, Any] | None = None
         self.ranking: pd.DataFrame | None = None
+        self.prediction: dict[str, Any] | None = None
 
     # ------------------------------------------------------------------
     # Full pipeline
@@ -70,8 +75,12 @@ class PipelineOrchestrator:
         logger.info("Phase 5: DSS (AHP-TOPSIS)")
         self.ranking = self._run_dss()
 
-        # Phase 6 — Visualisation
-        logger.info("Phase 6: Visualisation")
+        # Phase 6 — Price normalization prediction (methodology Phase 6)
+        logger.info("Phase 6: Normalization prediction")
+        self._run_prediction()
+
+        # Phase 7 — Visualisation
+        logger.info("Phase 7: Visualisation")
         self._run_visualisation()
 
         logger.info("PIPELINE COMPLETE")
@@ -229,12 +238,30 @@ class PipelineOrchestrator:
             return pd.DataFrame()
         return pd.DataFrame(matrix_data)
 
+    def _run_prediction(self) -> None:
+        """Run Phase 6 scenario analysis on the median category price."""
+        predictor = NormalizationPredictor()
+        if self.data is None or "price" not in self.data.columns or self.data.empty:
+            logger.warning("No price data — skipping normalization prediction")
+            self.prediction = None
+            return
+
+        median_price = float(pd.to_numeric(self.data["price"], errors="coerce").median())
+        summary = predictor.summarize(median_price)
+        self.prediction = summary
+        logger.info(
+            "Normalization: expected price %.0f, most likely %s (%s)",
+            summary["expected_normalized_price"],
+            summary["most_likely_scenario"],
+            summary["most_likely_timeframe"],
+        )
+
     def _run_visualisation(self) -> None:
         vis_cfg = self.config.get("visualization", {})
         viz = Visualizer(
             self.data,
             output_dir="outputs/visualizations",
-            style=vis_cfg.get("style", "seaborn-v0_8-darkgrid"),
+            style=vis_cfg.get("style", "darkgrid"),
             palette=vis_cfg.get("palette", "viridis"),
             figsize=tuple(vis_cfg.get("figsize", [12, 8])),
             dpi=vis_cfg.get("dpi", 150),
@@ -271,5 +298,8 @@ class PipelineOrchestrator:
 
             with open(out / "statistics.json", "w", encoding="utf-8") as fh:
                 json.dump(_convert(self.stats), fh, indent=2)
+            if self.prediction:
+                with open(out / "prediction.json", "w", encoding="utf-8") as fh:
+                    json.dump(_convert(self.prediction), fh, indent=2)
 
         logger.info("Results saved to %s", out)

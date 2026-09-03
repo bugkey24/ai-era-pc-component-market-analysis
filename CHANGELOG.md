@@ -10,6 +10,14 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- **Price-normalization prediction module** (`NormalizationPredictor`,
+  `src/analysis/normalization_predictor.py`) — implements methodology
+  Phase 6, which was documented but never built: the regression-based
+  `predict_normalization` model, explicit bull/base/bear scenario
+  definitions (with per-scenario investment/fab drivers matching the
+  documented semantics), probability-weighted `summarize()`.
+- Pipeline Phase 6: runs scenario analysis on the median price and
+  persists `outputs/prediction.json` via `save_results`.
 - **Review-scraping layer** — parallel `BaseReviewScraper` ABC with
   `TokopediaReviewScraper`, `BlibliReviewScraper`, `ShopeeReviewScraper`
   (Selenium), `REVIEW_SCRAPER_REGISTRY` + `get_review_scraper()` factory,
