@@ -21,6 +21,8 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Badge headers and cross-navigation links on all documentation files.
 - `README.md` — project entry point with badges, overview, and doc index.
 - `CHANGELOG.md` — this file.
+- `docs/08-git-workflow.md` — branching strategy, commit conventions, merge rules, tagging.
+- `.gitignore`, `requirements.txt`, `config.yaml`, and full directory skeleton for Git readiness.
 
 ### Changed
 

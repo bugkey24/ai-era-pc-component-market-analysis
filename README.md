@@ -12,7 +12,7 @@
 </p>
 
 <p align="center">
-  <a href="./docs/01-overview.md">Overview</a> | <a href="./docs/02-architecture.md">Architecture</a> | <a href="./docs/03-methodology.md">Methodology</a> | <a href="./docs/04-data-collection.md">Data</a> | <a href="./docs/05-results-and-checklist.md">Results</a> | <a href="./docs/06-timeline.md">Timeline</a> | <a href="./docs/07-references.md">References</a> | <a href="./CHANGELOG.md">Changelog</a> | <a href="./LICENSE">License</a>
+  <a href="./docs/01-overview.md">Overview</a> | <a href="./docs/02-architecture.md">Architecture</a> | <a href="./docs/03-methodology.md">Methodology</a> | <a href="./docs/04-data-collection.md">Data</a> | <a href="./docs/05-results-and-checklist.md">Results</a> | <a href="./docs/06-timeline.md">Timeline</a> | <a href="./docs/07-references.md">References</a> | <a href="./docs/08-git-workflow.md">Git Workflow</a> | <a href="./CHANGELOG.md">Changelog</a> | <a href="./LICENSE">License</a>
 </p>
 
 ## Problem
@@ -73,6 +73,7 @@ The AI boom has diverted semiconductor production away from consumer-grade compo
 | [docs/05-results-and-checklist.md](docs/05-results-and-checklist.md) | Expected results, checklist, success criteria, risks |
 | [docs/06-timeline.md](docs/06-timeline.md) | 4-week implementation timeline |
 | [docs/07-references.md](docs/07-references.md) | References, required libraries, Colab setup |
+| [docs/08-git-workflow.md](docs/08-git-workflow.md) | Branching strategy, commit conventions, merge rules |
 
 ## Getting Started
 
