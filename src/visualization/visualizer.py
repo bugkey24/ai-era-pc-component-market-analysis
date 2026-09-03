@@ -73,8 +73,15 @@ class Visualizer:
             logger.warning("No 'category' column — skipping price_trends")
             return fig
 
-        sns.boxplot(data=self.df, x="category", y="price", hue="category",
-                    palette=self.palette, legend=False, ax=ax)
+        sns.boxplot(
+            data=self.df,
+            x="category",
+            y="price",
+            hue="category",
+            palette=self.palette,
+            legend=False,
+            ax=ax,
+        )
         ax.set_title("Price Distribution by Component Category", fontsize=14)
         ax.set_xlabel("Category")
         ax.set_ylabel("Price (IDR)")
@@ -103,14 +110,17 @@ class Visualizer:
     # 3. Correlation heatmap
     # ------------------------------------------------------------------
 
-    def plot_correlation_heatmap(self, columns: list[str] | None = None, save: bool = True) -> plt.Figure:
+    def plot_correlation_heatmap(
+        self, columns: list[str] | None = None, save: bool = True
+    ) -> plt.Figure:
         """Heatmap of numeric column correlations."""
         fig, ax = plt.subplots(figsize=(10, 8))
         cols = columns or self.df.select_dtypes(include=np.number).columns.tolist()
         corr = self.df[cols].corr()
         mask = np.triu(np.ones_like(corr, dtype=bool))
-        sns.heatmap(corr, mask=mask, annot=True, fmt=".2f", cmap=self.palette,
-                    linewidths=0.5, ax=ax)
+        sns.heatmap(
+            corr, mask=mask, annot=True, fmt=".2f", cmap=self.palette, linewidths=0.5, ax=ax
+        )
         ax.set_title("Feature Correlation Matrix", fontsize=14)
         self._finish(fig, "correlation_heatmap", save)
         return fig
@@ -123,8 +133,15 @@ class Visualizer:
         """Horizontal bar chart of TOPSIS scores."""
         fig, ax = plt.subplots()
         top = ranking_df.head(10)
-        sns.barplot(data=top, x="Score", y="Alternative", hue="Alternative",
-                    palette="viridis", legend=False, ax=ax)
+        sns.barplot(
+            data=top,
+            x="Score",
+            y="Alternative",
+            hue="Alternative",
+            palette="viridis",
+            legend=False,
+            ax=ax,
+        )
         ax.set_title("TOPSIS Ranking — Top Alternatives", fontsize=14)
         ax.set_xlabel("Relative Closeness Score")
         ax.set_ylabel("Alternative Index")
@@ -135,7 +152,9 @@ class Visualizer:
     # 5. Word cloud
     # ------------------------------------------------------------------
 
-    def plot_wordcloud(self, text_series: pd.Series, title: str = "Word Cloud", save: bool = True) -> plt.Figure:
+    def plot_wordcloud(
+        self, text_series: pd.Series, title: str = "Word Cloud", save: bool = True
+    ) -> plt.Figure:
         """Generate a word cloud from a text series."""
         try:
             from wordcloud import WordCloud
@@ -144,8 +163,9 @@ class Visualizer:
             return plt.figure()
 
         text = " ".join(text_series.dropna().astype(str))
-        wc = WordCloud(width=1200, height=600, background_color="white",
-                       colormap="viridis", max_words=200).generate(text)
+        wc = WordCloud(
+            width=1200, height=600, background_color="white", colormap="viridis", max_words=200
+        ).generate(text)
         fig, ax = plt.subplots(figsize=(14, 7))
         ax.imshow(wc, interpolation="bilinear")
         ax.axis("off")
@@ -157,14 +177,22 @@ class Visualizer:
     # 6. Radar chart (for AHP-TOPSIS scores)
     # ------------------------------------------------------------------
 
-    def plot_radar_chart(self, labels: list[str], values: list[float], title: str = "Criteria Profile", save: bool = True) -> plt.Figure:
+    def plot_radar_chart(
+        self,
+        labels: list[str],
+        values: list[float],
+        title: str = "Criteria Profile",
+        save: bool = True,
+    ) -> plt.Figure:
         """Radar/spider chart for a single alternative's criteria profile."""
         angles = np.linspace(0, 2 * np.pi, len(labels), endpoint=False).tolist()
         values_closed = values + values[:1]
         angles_closed = angles + angles[:1]
 
         fig, ax = plt.subplots(figsize=(8, 8), subplot_kw=dict(polar=True))
-        ax.fill(angles_closed, values_closed, alpha=0.25, color=sns.color_palette(self.palette, 1)[0])
+        ax.fill(
+            angles_closed, values_closed, alpha=0.25, color=sns.color_palette(self.palette, 1)[0]
+        )
         ax.plot(angles_closed, values_closed, linewidth=2)
         ax.set_xticks(angles)
         ax.set_xticklabels(labels, fontsize=10)

@@ -92,9 +92,7 @@ class TestConfigDrivenMatrix:
 
     def test_accepts_fraction_strings(self):
         ahp = AHPProcessor(["a", "b", "c"])
-        ahp.build_pairwise_matrix(
-            [["1", "3", "5"], ["1/3", "1", "3"], ["1/5", "1/3", "1"]]
-        )
+        ahp.build_pairwise_matrix([["1", "3", "5"], ["1/3", "1", "3"], ["1/5", "1/3", "1"]])
         ahp.calculate_weights().check_consistency()
         assert ahp.is_consistent()
         assert ahp.get_weights().sum() == pytest.approx(1.0, abs=1e-6)

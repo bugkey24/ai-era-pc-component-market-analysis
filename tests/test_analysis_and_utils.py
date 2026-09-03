@@ -1,6 +1,5 @@
 """Tests for utils (config loading + logger) and StatisticalAnalyzer."""
 
-
 import pandas as pd
 import pytest
 
