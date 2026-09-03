@@ -4,72 +4,68 @@
 </p>
 
 <p align="center">
-  <a href="../README.md">README</a> | <a href="./01-overview.md">Overview</a> | <a href="./02-architecture.md">Architecture</a> | <a href="./03-methodology.md">Methodology</a> | <a href="./05-results-and-checklist.md">Results</a> | <a href="./06-timeline.md">Timeline</a> | <a href="./07-references.md">References</a>
+  <a href="../README.md">README</a> | <a href="./01-overview.md">Overview</a> | <a href="./02-architecture.md">Architecture</a> | <a href="./03-methodology.md">Methodology</a> | <a href="./05-results-and-checklist.md">Results</a> | <a href="./06-timeline.md">Timeline</a> | <a href="./07-references.md">References</a> | <a href="./08-git-workflow.md">Git Workflow</a> | <a href="./09-live-experiment-results.md">Live Results</a> | <a href="./10-running-guide.md">Running Guide</a>
 </p>
 
 # Data Collection Plan
 
 ---
 
-> **⚠️ Compliance first:** robots.txt snapshots and the full per-platform
-> analysis live in [`docs/compliance/`](./compliance/README.md). Summary:
-> Tokopedia = primary platform (switch search to `/find/`, reviews explicitly
-> allowed) · Shopee = risky (anti-bot in practice, `Crawl-delay: 1`) ·
-> Blibli = products only, no search, no reviews. The selectors below are
-> best-effort and must be re-validated against live pages.
+> **Compliance first:** robots.txt snapshots and the full per-platform
+> analysis live in [`docs/compliance/`](./compliance/README.md). Status after
+> live validation (2026-09-03): **Tokopedia = validated** (cache-based
+> parsing, 247 products + 42 reviews — see
+> [`09-live-experiment-results.md`](./09-live-experiment-results.md)) ·
+> **Shopee** = robots-legal but anti-bot risk, code-validated only ·
+> **Bibli** = products-only path (no search, no reviews), code-validated only.
+> Every fetch passes the `RobotsGuard` compliance gate (fail-closed).
 
 ---
 
 ## Platform Overview
 
-| Platform  | Target Category | Scraping Method          | Difficulty |
-| --------- | --------------- | ------------------------ | ---------- |
-| Tokopedia | GPU, RAM, SSD   | Requests + BeautifulSoup | Medium     |
-| Shopee    | GPU, RAM, SSD   | Selenium (dynamic)       | High       |
-| Blibli    | GPU, RAM, SSD   | Requests + BeautifulSoup | Medium     |
+| Platform  | Target Category | Scraping Method          | Difficulty | Live status |
+| --------- | --------------- | ------------------------ | ---------- | ----------- |
+| Tokopedia | GPU, RAM, SSD   | Requests + Apollo-cache parsing | Medium | ✅ validated |
+| Shopee    | GPU, RAM, SSD   | Selenium (dynamic)       | High       | ⚠️ not run live |
+| Blibli    | GPU, RAM, SSD   | Requests + BeautifulSoup | Medium     | ⚠️ not run live |
 
 ---
 
-## 6.1 Tokopedia
+## 6.1 Tokopedia — ✅ live-validated (2026-09-03)
 
-**Structure:**
+**Data source: the embedded Apollo cache, not DOM selectors.** Product
+cards render server-side but with obfuscated class names and no
+field-level test-ids; the page embeds `window.__cache`, an Apollo
+normalized JSON store holding complete entities
+(`searchProductV5Product{ID}` → name, clean URL, numeric price +
+`original_price`, discount %, rating, `meta.countReview`, shop
+name/tier/city, category breadcrumb). Reviews pages carry the same
+pattern (`productrevGetProductReviewList` → `reviewListPDPType{ID}`).
 
 ```
-URL: https://www.tokopedia.com/find/gpu?page=1   (robots-allowed: Allow: /find/*?page)
-HTML: div[data-testid="divProductWrapper"]
-Price: span[data-testid="productPrice"]
-Rating: span[data-testid="productRating"]
-Reviews: {product-url}/review                    (robots-allowed: Allow: /*/review)
+URL: https://www.tokopedia.com/find/{keyword}?page=1   (robots: Allow: /find/*?page)
+Reviews: {product-url}/review                          (robots: Allow: /*/review)
+Parse:   window.__cache → resolve id-references → product/review dicts
 ```
 
 > ⚠️ The legacy `/search?q=` surface is robots-DISALLOWED — never use it.
+> Bare category words ("gpu") return accessories and books; config
+> `search_keywords` maps categories to chip-level keywords
+> (`gpu→rtx`, `ram→ddr5`, `ssd→nvme`), and a breadcrumb filter plus
+> accessory/cross-category exclusion patterns (all live-verified — see
+> [`09-live-experiment-results.md`](./09-live-experiment-results.md)) remove the rest.
 
-**Implementation:**
-
-```python
-def scrape_tokopedia(category, pages=5):
-    base_url = f"https://www.tokopedia.com/find/{category}?page=1"
-    headers = {'User-Agent': 'Mozilla/5.0'}
-    products = []
-
-    for page in range(1, pages + 1):
-        url = base_url.replace("page=1", f"page={page}")
-        response = requests.get(url, headers=headers)
-        soup = BeautifulSoup(response.text, 'html.parser')
-
-        items = soup.find_all('div', {'data-testid': 'divProductWrapper'})
-        for item in items:
-            product = extract_product_data(item)
-            products.append(product)
-
-        time.sleep(2)
-
-    return pd.DataFrame(products)
-```
+Yield: 247 products across 3 pages × 3 categories; 42-review corpus.
 
 ---
 
-## 6.2 Shopee
+## 6.2 Shopee — ⚠️ robots-legal, not run live (anti-bot risk)
+
+> Code-validated offline only. Robots' `User-agent: *` section does not
+> disallow plain search and sets `Crawl-delay: 1` (our 2 s delay complies),
+> but real browsing typically hits login walls/verification — do not scrape
+> behind authentication regardless of robots.
 
 **Structure:**
 
@@ -114,7 +110,7 @@ def scrape_shopee(category):
 
 ## 6.3 Blibli
 
-**Structure:**
+**Structure (products-only path; code-validated, not yet run live):**
 
 ```
 URL: https://www.blibli.com/c/{category}     (robots-allowed category pages)
@@ -125,21 +121,25 @@ Reviews: NOT SANCTIONED — no allowed review surface; scraper gated off
 
 ---
 
-## Review Collection (Tokopedia-first)
+## Review Collection (Tokopedia — validated)
 
 Reviews feed the sentiment phase. **Only Tokopedia's robots.txt explicitly
 permits review crawling** (`Allow: /*/review`, plus a published
 `review-index.xml` sitemap) — see [`compliance/README.md`](./compliance/README.md).
+Live yield: 42 reviews from 11 of 12 sampled products
+([`09-live-experiment-results.md`](./09-live-experiment-results.md)).
 
 **Review schema** (`REVIEW_SCHEMA`, shared by all review scrapers):
 
 ```python
 {
     'product_id': 'string',
+    'review_id': 'string (platform feedback id)',
     'review_text': 'string',
     'rating': 'float (0-5)',
     'review_date': 'string (platform format)',
     'helpful_count': 'integer',
+    'user_name': 'string',
     'source': 'platform name'
 }
 ```

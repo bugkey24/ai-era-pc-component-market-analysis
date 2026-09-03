@@ -4,7 +4,7 @@
 </p>
 
 <p align="center">
-  <a href="../README.md">README</a> | <a href="./01-overview.md">Overview</a> | <a href="./02-architecture.md">Architecture</a> | <a href="./04-data-collection.md">Data Collection</a> | <a href="./05-results-and-checklist.md">Results</a> | <a href="./06-timeline.md">Timeline</a> | <a href="./07-references.md">References</a>
+  <a href="../README.md">README</a> | <a href="./01-overview.md">Overview</a> | <a href="./02-architecture.md">Architecture</a> | <a href="./04-data-collection.md">Data Collection</a> | <a href="./05-results-and-checklist.md">Results</a> | <a href="./09-live-experiment-results.md">Live Results</a> | <a href="./10-running-guide.md">Running Guide</a> | <a href="./06-timeline.md">Timeline</a> | <a href="./07-references.md">References</a>
 </p>
 
 # Detailed Methodology

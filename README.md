@@ -1,6 +1,6 @@
 <p align="center">
   <a href="https://github.com/bugkey24/ai-era-pc-component-market-analysis">
-    <img src="https://img.shields.io/badge/AI--Era--PC--Market--Analysis-1.0-blue?style=for-the-badge" alt="Version Badge" />
+    <img src="https://img.shields.io/badge/AI--Era--PC--Market--Analysis-1.2.1-blue?style=for-the-badge" alt="Version Badge" />
   </a>
   <img src="https://img.shields.io/badge/Python-3.8+-yellow?style=for-the-badge&logo=python&logoColor=white" alt="Python Badge" />
   <img src="https://img.shields.io/badge/Platform-Google%20Colab-orange?style=for-the-badge&logo=googlecolab&logoColor=white" alt="Colab Badge" />
@@ -30,6 +30,22 @@ The AI boom has diverted semiconductor production away from consumer-grade compo
 - **Why** have prices increased over 100%?
 - **When** will prices normalize?
 - **What** is the optimal purchasing strategy for my needs and risk tolerance?
+
+## Results (live experiments, 2026-09-03)
+
+Collected **247 real product listings** (GPU/RAM/SSD) and a **42-review
+corpus** from Tokopedia in ~30 robots-guarded requests — full findings in
+[docs/09-live-experiment-results.md](docs/09-live-experiment-results.md):
+
+| Metric | GPU | RAM | SSD |
+| ------ | --- | --- | --- |
+| Median price (IDR) | 14,633,000 | 8,544,500 | 3,479,000 |
+| AHP-TOPSIS best-value pick | Zotac RTX 3050 6GB (Rp 5.2M) | GSKILL Ripjaws S5 6000MHz | Corsair MP600 Elite 1TB (Rp 3.9M) |
+| Price-normalization outlook | base scenario: **2027-2028** (expected normalized price Rp 13.5M vs current Rp 8.5M median) | | |
+
+Sentiment on the real corpus: fits and predicts; held-out accuracy **not
+measurable** (e-commerce reviews skew ~all-positive) — honest reporting,
+path to the >75% criterion documented.
 
 ## Approach
 
@@ -63,12 +79,13 @@ The AI boom has diverted semiconductor production away from consumer-grade compo
 │   ├── visualization/     # Visualizer
 │   ├── pipeline.py        # 7-phase orchestrator
 │   └── utils/             # Logger, config loading
-├── tests/                 # 149 offline tests (pytest, CI-gated)
+├── tests/                 # 160 offline tests (pytest, CI-gated, 82% coverage)
 ├── notebooks/             # main_pipeline.ipynb (Colab entry point)
-├── data/raw/              # Scraped CSVs per platform/category + reviews_*.csv
+├── data/snapshot/         # committed real experiment data (no scraping needed)
+├── data/raw/              # fresher local scrape output (gitignored)
 ├── data/processed/        # Cleaned datasets
 ├── outputs/               # Charts, rankings, statistics.json, prediction.json
-├── docs/                  # Detailed documentation + compliance/robots analysis
+├── docs/                  # Detailed documentation + compliance/ + results
 ├── config.yaml            # Centralized configuration
 ├── requirements.txt       # Runtime dependencies
 └── requirements-dev.txt   # Test/CI tooling
@@ -86,24 +103,31 @@ The AI boom has diverted semiconductor production away from consumer-grade compo
 | [docs/06-timeline.md](docs/06-timeline.md) | 4-week implementation timeline |
 | [docs/07-references.md](docs/07-references.md) | References, required libraries, Colab setup |
 | [docs/08-git-workflow.md](docs/08-git-workflow.md) | Branching strategy, commit conventions, merge rules |
+| [docs/09-live-experiment-results.md](docs/09-live-experiment-results.md) | Live experiment results: collection, statistics, sentiment, ranking, prediction |
+| [docs/10-running-guide.md](docs/10-running-guide.md) | How to run — Colab-first, local setup, collection mode, troubleshooting |
 | [docs/compliance/README.md](docs/compliance/README.md) | robots.txt snapshots + per-platform scraping verdicts |
+| [docs/compliance/final-validation-v1-2-0.md](docs/compliance/final-validation-v1-2-0.md) | Formal success-criteria validation |
 
 ## Getting Started
 
+**Google Colab (recommended):** open
+[`notebooks/main_pipeline.ipynb`](notebooks/main_pipeline.ipynb) in
+[Colab](https://colab.research.google.com) and run all cells — the real
+experiment data ships in `data/snapshot/`, so no scraping is required
+(≈3 minutes, CPU runtime). Full instructions including collection mode:
+[docs/10-running-guide.md](docs/10-running-guide.md).
+
+<details>
+<summary>Local setup</summary>
+
 ```bash
-# Clone the repository
 git clone https://github.com/bugkey24/ai-era-pc-component-market-analysis.git
 cd ai-era-pc-component-market-analysis
-
-# Install dependencies
-pip install -r requirements.txt
-
-# Download NLTK data
-python -c "import nltk; nltk.download('punkt'); nltk.download('stopwords')"
-
-# Run in Google Colab (recommended)
-# Open notebooks/main_pipeline.ipynb
+pip install -r requirements.txt -r requirements-dev.txt
+python -m pytest tests/        # 160 tests
 ```
+
+</details>
 
 ## Configuration
 

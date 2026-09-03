@@ -36,6 +36,8 @@ desktop.ini
 data/raw/*.csv
 data/processed/*.csv
 *.parquet
+# …except the committed snapshot the notebook/Colab presents
+!data/snapshot/*.csv
 
 # Logs
 logs/

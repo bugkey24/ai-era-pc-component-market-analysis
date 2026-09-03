@@ -3,6 +3,9 @@
 **Snapshot date:** 2026-09-03
 **Source files:** `tokopedia.robots.txt`, `shopee.robots.txt`, `blibli.robots.txt` (this directory)
 **Governing agent:** each platform's rules for `User-agent: *` (our scrapers identify with a custom UA, which falls under `*`)
+**Outcome:** Tokopedia collection live-validated — results in
+[`../09-live-experiment-results.md`](../09-live-experiment-results.md),
+formal scorecard in [`final-validation-v1-2-0.md`](./final-validation-v1-2-0.md).
 
 > Re-snapshot robots.txt before every live scraping run — platform rules change.
 > This analysis maps each rule to our configured scraping targets in `config.yaml`.
