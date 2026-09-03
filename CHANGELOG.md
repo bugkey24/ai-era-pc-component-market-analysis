@@ -38,7 +38,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - `SentimentAnalyzer.preprocess_text` — added null/empty string guard.
 - `SentimentAnalyzer.train` — filters empty strings before TF-IDF vectorization.
 - `DataPreprocessor.remove_outliers` — added `std == 0` guard.
-- `DataPreprocessor.handle_missing` — added `numeric_only=True` to `median()`.
+- `DataPreprocessor.handle_missing` — restricted fill to numeric columns via `select_dtypes(include=np.number)` before `median()`.
 
 ### Removed
 
