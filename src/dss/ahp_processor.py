@@ -43,9 +43,7 @@ class AHPProcessor:
         ``1/3`` as a string, so config-driven matrices arrive in that form).
         """
         if len(comparisons) != self.n or any(len(row) != self.n for row in comparisons):
-            raise ValueError(
-                f"Matrix must be {self.n}×{self.n}. Got {len(comparisons)} rows."
-            )
+            raise ValueError(f"Matrix must be {self.n}×{self.n}. Got {len(comparisons)} rows.")
         coerced = [[self._coerce_value(v) for v in row] for row in comparisons]
         self.pairwise_matrix = np.array(coerced, dtype=float)
         # Validate Saaty scale: diagonal must be 1
@@ -103,8 +101,11 @@ class AHPProcessor:
         ri = _RI_TABLE.get(self.n, 1.45)
         self.consistency_ratio = ci / ri if ri > 0 else 0.0
 
-        logger.info("CR = %.4f (%s)", self.consistency_ratio,
-                     "consistent" if self.is_consistent() else "INCONSISTENT")
+        logger.info(
+            "CR = %.4f (%s)",
+            self.consistency_ratio,
+            "consistent" if self.is_consistent() else "INCONSISTENT",
+        )
         return self
 
     def is_consistent(self, threshold: float = 0.1) -> bool:
@@ -133,6 +134,8 @@ class AHPProcessor:
             "criteria": self.criteria,
             "weights": self.get_criteria_weights_dict() if self.weights is not None else {},
             "lambda_max": round(self.lambda_max, 4) if self.lambda_max is not None else None,
-            "consistency_ratio": round(self.consistency_ratio, 4) if self.consistency_ratio is not None else None,
+            "consistency_ratio": round(self.consistency_ratio, 4)
+            if self.consistency_ratio is not None
+            else None,
             "is_consistent": self.is_consistent() if self.consistency_ratio is not None else None,
         }

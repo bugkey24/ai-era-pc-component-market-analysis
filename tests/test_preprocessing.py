@@ -114,18 +114,14 @@ class TestPricePerGb:
 
 class TestWeightedRating:
     def test_more_reviews_increases_weight(self):
-        df = pd.DataFrame(
-            {"rating": [5.0, 5.0], "review_count": [1000, 1]}
-        )
+        df = pd.DataFrame({"rating": [5.0, 5.0], "review_count": [1000, 1]})
         result = FeatureEngineer(df).create_weighted_rating(min_reviews=5).get_engineered_data()
         assert result["weighted_rating"].iloc[0] > result["weighted_rating"].iloc[1]
 
 
 class TestSellerTrust:
     def test_trust_increases_with_followers(self):
-        df = pd.DataFrame(
-            {"seller_rating": [5.0, 5.0], "seller_followers": [10_000, 10]}
-        )
+        df = pd.DataFrame({"seller_rating": [5.0, 5.0], "seller_followers": [10_000, 10]})
         result = FeatureEngineer(df).create_seller_trust_score().get_engineered_data()
         assert result["seller_trust"].iloc[0] > result["seller_trust"].iloc[1]
 

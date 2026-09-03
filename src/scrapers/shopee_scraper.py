@@ -38,9 +38,7 @@ class ShopeeScraper(BaseScraper):
             self.driver = self._init_driver()
         self.driver.get(url)
         WebDriverWait(self.driver, 10).until(
-            EC.presence_of_element_located(
-                (By.CSS_SELECTOR, '[data-testid="product-item"]')
-            )
+            EC.presence_of_element_located((By.CSS_SELECTOR, '[data-testid="product-item"]'))
         )
         self._scroll_to_load()
         return self.driver.page_source

@@ -18,8 +18,7 @@ def get_scraper(platform: str, config: dict) -> BaseScraper:
     cls = SCRAPER_REGISTRY.get(platform.lower())
     if cls is None:
         raise ValueError(
-            f"Unknown platform '{platform}'. "
-            f"Available: {list(SCRAPER_REGISTRY.keys())}"
+            f"Unknown platform '{platform}'. Available: {list(SCRAPER_REGISTRY.keys())}"
         )
     return cls(config)
 

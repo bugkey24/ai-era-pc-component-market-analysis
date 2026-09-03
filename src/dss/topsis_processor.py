@@ -53,7 +53,7 @@ class TOPSISProcessor:
 
     def normalize_matrix(self) -> TOPSISProcessor:
         """Vector-normalise the decision matrix."""
-        norms = np.sqrt((self.matrix ** 2).sum(axis=0))
+        norms = np.sqrt((self.matrix**2).sum(axis=0))
         norms[norms == 0] = 1  # prevent division by zero
         self._normalized = self.matrix / norms
         return self
@@ -100,11 +100,13 @@ class TOPSISProcessor:
         self.normalize_matrix().apply_weights().find_ideal_solutions()
         self.calculate_separation().calculate_scores()
 
-        df = pd.DataFrame({
-            "Alternative": range(self.n_alternatives),
-            "Score": self._scores.round(4),
-            "Rank": self._scores.argsort()[::-1] + 1,
-        })
+        df = pd.DataFrame(
+            {
+                "Alternative": range(self.n_alternatives),
+                "Score": self._scores.round(4),
+                "Rank": self._scores.argsort()[::-1] + 1,
+            }
+        )
         df = df.sort_values("Rank").reset_index(drop=True)
         logger.info("TOPSIS ranking:\n%s", df.head(10).to_string())
         return df

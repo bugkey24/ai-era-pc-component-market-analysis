@@ -165,11 +165,11 @@ class PipelineOrchestrator:
         """
         col_map = {
             "price": "price",
-            "performance": "rating",           # proxy
-            "rating": "weighted_rating",       # if available, else rating
+            "performance": "rating",  # proxy
+            "rating": "weighted_rating",  # if available, else rating
             "seller_reliability": "seller_trust",
-            "sentiment": "sentiment_score",     # placeholder
-            "future_value": "price_per_gb",     # proxy
+            "sentiment": "sentiment_score",  # placeholder
+            "future_value": "price_per_gb",  # proxy
         }
         matrix_data: dict[str, pd.Series] = {}
         for c in criteria:
@@ -212,6 +212,7 @@ class PipelineOrchestrator:
             self.ranking.to_csv(out / "ranking.csv", index=False)
         if self.stats:
             import json
+
             # Convert numpy types for JSON serialisation
             def _convert(obj: Any) -> Any:
                 if isinstance(obj, (int, float, str, bool)):
