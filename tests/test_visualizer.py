@@ -1,6 +1,7 @@
 """Tests for the Visualizer (headless Agg backend, tmp_path output)."""
 
 import matplotlib
+
 matplotlib.use("Agg")
 
 import pandas as pd

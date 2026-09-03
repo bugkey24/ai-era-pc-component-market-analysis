@@ -4,13 +4,13 @@ from __future__ import annotations
 
 import logging
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any
 
 import pandas as pd
 
 from src.analysis import SentimentAnalyzer, StatisticalAnalyzer
 from src.dss import AHPProcessor, TOPSISProcessor
-from src.preprocessing import DataPreprocessor, FeatureEngineer
+from src.preprocessing import DataPreprocessor
 from src.scrapers import get_scraper
 from src.utils import load_config, setup_logger
 from src.visualization import Visualizer
@@ -36,9 +36,9 @@ class PipelineOrchestrator:
             fmt=log_cfg.get("format"),
             log_file=log_cfg.get("file"),
         )
-        self.data: Optional[pd.DataFrame] = None
-        self.stats: Optional[Dict[str, Any]] = None
-        self.ranking: Optional[pd.DataFrame] = None
+        self.data: pd.DataFrame | None = None
+        self.stats: dict[str, Any] | None = None
+        self.ranking: pd.DataFrame | None = None
 
     # ------------------------------------------------------------------
     # Full pipeline

@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import logging
-from typing import List, Optional
 
 import numpy as np
 
@@ -25,13 +24,13 @@ class AHPProcessor:
         weights = ahp.get_weights()
     """
 
-    def __init__(self, criteria: List[str]) -> None:
+    def __init__(self, criteria: list[str]) -> None:
         self.criteria = criteria
         self.n = len(criteria)
-        self.pairwise_matrix: Optional[np.ndarray] = None
-        self.weights: Optional[np.ndarray] = None
-        self.consistency_ratio: Optional[float] = None
-        self.lambda_max: Optional[float] = None
+        self.pairwise_matrix: np.ndarray | None = None
+        self.weights: np.ndarray | None = None
+        self.consistency_ratio: float | None = None
+        self.lambda_max: float | None = None
 
     # ------------------------------------------------------------------
     # Matrix construction

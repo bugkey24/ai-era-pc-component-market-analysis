@@ -1,7 +1,6 @@
 """Utility helpers for the AI-Era PC Market Analysis project."""
 
 import logging
-import os
 from pathlib import Path
 from typing import Optional
 
@@ -13,7 +12,7 @@ def load_config(path: str = "config.yaml") -> dict:
     config_path = Path(path)
     if not config_path.exists():
         raise FileNotFoundError(f"Config file not found: {config_path}")
-    with open(config_path, "r", encoding="utf-8") as fh:
+    with open(config_path, encoding="utf-8") as fh:
         return yaml.safe_load(fh)
 
 

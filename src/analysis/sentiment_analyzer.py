@@ -4,9 +4,8 @@ from __future__ import annotations
 
 import logging
 import re
-from typing import Any, Dict, List, Optional
+from typing import Any
 
-import numpy as np
 import pandas as pd
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics import classification_report
@@ -64,8 +63,8 @@ class SentimentAnalyzer:
         self.model = LinearSVC(class_weight="balanced", random_state=42, max_iter=1000)
         self.label_encoder = LabelEncoder()
         self.is_trained = False
-        self.accuracy: Optional[float] = None
-        self.report: Optional[Dict[str, Any]] = None
+        self.accuracy: float | None = None
+        self.report: dict[str, Any] | None = None
         self._stopword_cache: set[str] | None = None
 
     # ------------------------------------------------------------------
@@ -108,8 +107,8 @@ class SentimentAnalyzer:
 
     def train(
         self,
-        texts: List[str],
-        labels: List[str],
+        texts: list[str],
+        labels: list[str],
         test_size: float = 0.2,
     ) -> SentimentAnalyzer:
         """Train the SVM classifier and evaluate on a held-out split."""
@@ -118,7 +117,7 @@ class SentimentAnalyzer:
         processed = [self.preprocess_text(t) for t in texts]
         valid_mask = [bool(p.strip()) for p in processed]
         processed = [p for p, v in zip(processed, valid_mask) if v]
-        labels = [l for l, v in zip(labels, valid_mask) if v]
+        labels = [lab for lab, v in zip(labels, valid_mask) if v]
 
         if len(processed) < 10:
             raise ValueError("Too few valid samples after preprocessing")
@@ -145,7 +144,7 @@ class SentimentAnalyzer:
     # Prediction
     # ------------------------------------------------------------------
 
-    def predict(self, texts: List[str]) -> List[str]:
+    def predict(self, texts: list[str]) -> list[str]:
         """Predict sentiment labels for new texts."""
         if not self.is_trained:
             raise ValueError("Model not trained yet. Call train() first.")
@@ -159,13 +158,13 @@ class SentimentAnalyzer:
     # ------------------------------------------------------------------
 
     def aspect_sentiment(
-        self, texts: List[str], aspects: Dict[str, List[str]]
-    ) -> Dict[str, Dict[str, float]]:
+        self, texts: list[str], aspects: dict[str, list[str]]
+    ) -> dict[str, dict[str, float]]:
         """Run sentiment per aspect (keyword-filtered)."""
         if not self.is_trained:
             raise ValueError("Model not trained yet.")
 
-        results: Dict[str, Dict[str, float]] = {}
+        results: dict[str, dict[str, float]] = {}
         all_preds = self.predict(texts)
         lower_texts = [t.lower() for t in texts]
 

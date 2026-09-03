@@ -4,9 +4,9 @@ from __future__ import annotations
 
 import logging
 from pathlib import Path
-from typing import Optional
 
 import matplotlib
+
 matplotlib.use("Agg")  # non-interactive backend — safe for Colab / headless
 import matplotlib.pyplot as plt
 import numpy as np

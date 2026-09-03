@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import logging
-from typing import List
 
 import numpy as np
 import pandas as pd
@@ -28,7 +27,7 @@ class TOPSISProcessor:
         self,
         decision_matrix: np.ndarray | list[list[float]],
         weights: np.ndarray | list[float],
-        criteria_types: List[str],
+        criteria_types: list[str],
     ) -> None:
         self.matrix = np.array(decision_matrix, dtype=float)
         self.weights = np.array(weights, dtype=float)

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import re
-from typing import Any, Dict, Optional
+from typing import Any
 
 import requests
 from bs4 import BeautifulSoup, Tag
@@ -29,7 +29,7 @@ class TokopediaScraper(BaseScraper):
         resp.raise_for_status()
         return resp.text
 
-    def get_next_page_url(self, current_url: str) -> Optional[str]:
+    def get_next_page_url(self, current_url: str) -> str | None:
         """Increment the ``page`` query param, appending it on first use."""
         match = re.search(r"[?&]page=(\d+)", current_url)
         if match:
@@ -42,7 +42,7 @@ class TokopediaScraper(BaseScraper):
         soup = BeautifulSoup(html, "lxml")
         return soup.find_all("div", {"data-testid": "divProductWrapper"})
 
-    def parse_product(self, element: Tag) -> Dict[str, Any]:
+    def parse_product(self, element: Tag) -> dict[str, Any]:
         return {
             "product_id": element.get("data-product-id", ""),
             "name": self._safe_text(element, "span", {"data-testid": "productName"}),

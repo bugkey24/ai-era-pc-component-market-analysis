@@ -4,8 +4,8 @@ import pytest
 
 from src.scrapers import (
     SCRAPER_REGISTRY,
-    BlibliScraper,
     BaseScraper,
+    BlibliScraper,
     ShopeeScraper,
     TokopediaScraper,
     get_scraper,
