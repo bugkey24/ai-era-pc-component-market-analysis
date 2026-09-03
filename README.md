@@ -1,8 +1,13 @@
 <p align="center">
-  <img src="https://img.shields.io/badge/AI--Era--PC--Market--Analysis-1.0-blue?style=for-the-badge" alt="Version Badge" />
+  <a href="https://github.com/bugkey24/ai-era-pc-component-market-analysis">
+    <img src="https://img.shields.io/badge/AI--Era--PC--Market--Analysis-1.0-blue?style=for-the-badge" alt="Version Badge" />
+  </a>
   <img src="https://img.shields.io/badge/Python-3.8+-yellow?style=for-the-badge&logo=python&logoColor=white" alt="Python Badge" />
   <img src="https://img.shields.io/badge/Platform-Google%20Colab-orange?style=for-the-badge&logo=googlecolab&logoColor=white" alt="Colab Badge" />
   <img src="https://img.shields.io/badge/License-MIT--Next-green?style=for-the-badge" alt="License Badge" />
+  <a href="https://github.com/bugkey24/ai-era-pc-component-market-analysis">
+    <img src="https://img.shields.io/github/stars/bugkey24/ai-era-pc-component-market-analysis?style=for-the-badge&logo=github" alt="GitHub Stars" />
+  </a>
 </p>
 
 <h1 align="center">AI-Driven Market Analysis for Computer Component Price Surge</h1>
@@ -78,6 +83,10 @@ The AI boom has diverted semiconductor production away from consumer-grade compo
 ## Getting Started
 
 ```bash
+# Clone the repository
+git clone https://github.com/bugkey24/ai-era-pc-component-market-analysis.git
+cd ai-era-pc-component-market-analysis
+
 # Install dependencies
 pip install -r requirements.txt
 

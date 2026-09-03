@@ -15,6 +15,8 @@
 
 This project uses a lightweight **Git Flow** variant suited for a small team building toward a single deliverable (Colab notebook + report). It balances structure with speed.
 
+**Repository:** [github.com/bugkey24/ai-era-pc-component-market-analysis](https://github.com/bugkey24/ai-era-pc-component-market-analysis)
+
 ```
 main (production-ready, tagged releases)
  │
@@ -218,6 +220,10 @@ Set these rules on your remote (GitHub/GitLab):
 ## 9. Quick Reference
 
 ```bash
+# Clone the repository
+git clone https://github.com/bugkey24/ai-era-pc-component-market-analysis.git
+cd ai-era-pc-component-market-analysis
+
 # Sync develop
 git checkout develop && git pull origin develop
 
