@@ -167,6 +167,26 @@ git tag -a v1.0.0 -m "v1.0.0: Initial project release"
 git push origin v1.0.0
 ```
 
+### Release close-out checklist (mandatory)
+
+A release is not finished when the tag is pushed. Every release —
+including small ones — must complete **all** of these steps:
+
+```bash
+# 1. Delete the release/feature branch (local + remote)
+git branch -d <branch> && git push origin --delete <branch>
+
+# 2. Sync develop with main so the "behind" counter stays at zero
+git checkout develop
+git merge --ff-only main || git merge --no-ff main   # ff when possible
+git push origin develop
+```
+
+Without step 2, each release leaves its `Merge develop into main`
+commit only on `main`, and GitHub reports `develop` as N commits behind
+even though the file contents are identical (this happened at v1.2.0/
+v1.2.1 and had to be repaired retroactively).
+
 ### Version Format
 
 ```
