@@ -42,6 +42,13 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   (≥4 → positive, ≤2 → negative, else neutral); per-product positive-rate
   is merged back as `sentiment_score`.
 
+- `ShopeeScraper._build_search_url`: regression introduced by the config
+  `base_url` change produced `shopee.co.id?keyword=` (missing `/search`
+  path); URL construction fixed and locked by a stricter test.
+- `docs/04`: Tokopedia examples migrated to the robots-allowed `/find/`
+  surface; `docs/07` appendices purged of removed deps (plotly,
+  webdriver-manager).
+
 ### Documentation
 
 - `docs/02-architecture.md` synced to current state: review-scraping layer,

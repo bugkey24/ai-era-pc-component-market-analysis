@@ -35,22 +35,25 @@
 **Structure:**
 
 ```
-URL: https://www.tokopedia.com/search?q=gpu&st=product
+URL: https://www.tokopedia.com/find/gpu?page=1   (robots-allowed: Allow: /find/*?page)
 HTML: div[data-testid="divProductWrapper"]
 Price: span[data-testid="productPrice"]
 Rating: span[data-testid="productRating"]
+Reviews: {product-url}/review                    (robots-allowed: Allow: /*/review)
 ```
+
+> ⚠️ The legacy `/search?q=` surface is robots-DISALLOWED — never use it.
 
 **Implementation:**
 
 ```python
 def scrape_tokopedia(category, pages=5):
-    base_url = f"https://www.tokopedia.com/search?q={category}"
+    base_url = f"https://www.tokopedia.com/find/{category}?page=1"
     headers = {'User-Agent': 'Mozilla/5.0'}
     products = []
 
     for page in range(1, pages + 1):
-        url = f"{base_url}&page={page}"
+        url = base_url.replace("page=1", f"page={page}")
         response = requests.get(url, headers=headers)
         soup = BeautifulSoup(response.text, 'html.parser')
 
