@@ -9,6 +9,7 @@ from .base_review_scraper import REVIEW_SCHEMA, BaseReviewScraper
 from .base_scraper import BaseScraper
 from .blibli_review_scraper import BlibliReviewScraper
 from .blibli_scraper import BlibliScraper
+from .robots_guard import RobotsGuard
 from .shopee_review_scraper import ShopeeReviewScraper
 from .shopee_scraper import ShopeeScraper
 from .tokopedia_review_scraper import TokopediaReviewScraper
@@ -52,6 +53,7 @@ __all__ = [
     "BaseScraper",
     "BaseReviewScraper",
     "REVIEW_SCHEMA",
+    "RobotsGuard",
     "TokopediaScraper",
     "ShopeeScraper",
     "BlibliScraper",

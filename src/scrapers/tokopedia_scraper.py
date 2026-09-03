@@ -21,8 +21,13 @@ class TokopediaScraper(BaseScraper):
     # ------------------------------------------------------------------
 
     def _build_search_url(self, category: str) -> str:
-        base = self.config.get("base_url", "https://www.tokopedia.com/search")
-        return f"{base}?q={category}&st=product"
+        """Build the first search URL.
+
+        Robots-compliant path: ``Allow: /find/*?page`` (docs/compliance).
+        The legacy ``/search?q=`` surface is DISALLOWED by robots.txt.
+        """
+        base = self.config.get("base_url", "https://www.tokopedia.com")
+        return f"{base}/find/{category}?page=1"
 
     def fetch_page(self, url: str) -> str:
         resp = requests.get(url, headers=self.headers, timeout=self.timeout)

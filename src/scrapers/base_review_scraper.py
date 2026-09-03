@@ -14,6 +14,8 @@ from typing import Any
 import pandas as pd
 import requests
 
+from .robots_guard import RobotsGuard
+
 # Schema fields every review scraper must produce (sentiment-phase contract):
 #   product_id, review_text, rating, review_date, helpful_count, source
 REVIEW_SCHEMA = [
@@ -30,6 +32,7 @@ class BaseReviewScraper(ABC):
     """Contract that every concrete review scraper must fulfil."""
 
     platform_name: str  # subclasses MUST set this
+    robots_permitted: bool = True  # set False when robots.txt forbids reviews
 
     def __init__(self, config: dict[str, Any]) -> None:
         self.config = config
@@ -43,6 +46,7 @@ class BaseReviewScraper(ABC):
         self.retry_count: int = config.get("retry_count", 3)
         self.delay: float = config.get("delay", 2.0)
         self.logger = logging.getLogger(f"scraper.{self.platform_name}.reviews")
+        self.robots_guard = RobotsGuard(config.get("robots", {}))
 
     # ------------------------------------------------------------------
     # Abstract methods — each platform MUST implement these
@@ -110,6 +114,14 @@ class BaseReviewScraper(ABC):
         reviews: list[dict[str, Any]] = []
         url = self.build_review_url(product_url)
 
+        if not self.robots_guard.is_allowed(url):
+            self.logger.warning(
+                "robots.txt disallows %s — aborting %s review scrape",
+                url,
+                self.platform_name,
+            )
+            return pd.DataFrame(columns=REVIEW_SCHEMA)
+
         for page in range(1, max_pages + 1):
             self.logger.info("Review page %d/%d — %s", page, max_pages, url)
             try:
@@ -128,7 +140,7 @@ class BaseReviewScraper(ABC):
             if not next_url:
                 break
             url = next_url
-            time.sleep(self.delay)
+            time.sleep(max(self.delay, self.robots_guard.crawl_delay(url) or 0.0))
 
         df = pd.DataFrame(reviews)
         if not df.empty:

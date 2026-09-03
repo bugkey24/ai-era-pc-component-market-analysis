@@ -21,8 +21,16 @@ class BlibliScraper(BaseScraper):
     # ------------------------------------------------------------------
 
     def _build_search_url(self, category: str) -> str:
-        base = self.config.get("base_url", "https://www.blibli.com/search")
-        return f"{base}/{category}"
+        """Build a category-listing URL.
+
+        Robots-compliant discovery: Blibli's robots.txt DISALLOWS
+        ``/search`` and ``/cari/*``; category pages (``/c/...``) are not
+        restricted for generic agents. Exact category slugs must be
+        validated against the live site (see docs/compliance).
+        """
+        base = self.config.get("base_url", "https://www.blibli.com")
+        slug = self.config.get("category_slugs", {}).get(category, category)
+        return f"{base}/c/{slug}"
 
     def fetch_page(self, url: str) -> str:
         resp = requests.get(url, headers=self.headers, timeout=self.timeout)

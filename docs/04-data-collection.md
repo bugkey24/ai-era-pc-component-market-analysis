@@ -11,6 +11,15 @@
 
 ---
 
+> **⚠️ Compliance first:** robots.txt snapshots and the full per-platform
+> analysis live in [`docs/compliance/`](./compliance/README.md). Summary:
+> Tokopedia = primary platform (switch search to `/find/`, reviews explicitly
+> allowed) · Shopee = risky (anti-bot in practice, `Crawl-delay: 1`) ·
+> Blibli = products only, no search, no reviews. The selectors below are
+> best-effort and must be re-validated against live pages.
+
+---
+
 ## Platform Overview
 
 | Platform  | Target Category | Scraping Method          | Difficulty |

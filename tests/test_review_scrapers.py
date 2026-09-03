@@ -42,7 +42,13 @@ BLIBLI_REVIEWS_HTML = """
 
 @pytest.fixture
 def review_config():
-    return {"user_agent": "test-agent", "timeout": 5, "retry_count": 3, "delay": 0.0}
+    return {
+        "user_agent": "test-agent",
+        "timeout": 5,
+        "retry_count": 3,
+        "delay": 0.0,
+        "robots": {"enabled": False},  # compliance behaviour tested in test_robots_guard.py
+    }
 
 
 class _FakeWebElement:
@@ -77,6 +83,16 @@ class TestFactory:
 
     def test_schema_fields_documented(self):
         assert set(REVIEW_SCHEMA) >= {"product_id", "review_text", "rating", "source"}
+
+    def test_blibli_reviews_marked_robots_blocked(self, review_config):
+        # Blibli robots disallows /p/*/pr* — the scraper must be gated off
+        scraper = get_review_scraper("blibli", review_config)
+        assert scraper.robots_permitted is False
+
+    def test_tokopedia_reviews_robots_permitted(self, review_config):
+        # Tokopedia robots explicitly allows /*/review
+        scraper = get_review_scraper("tokopedia", review_config)
+        assert scraper.robots_permitted is True
 
 
 class TestTokopediaReviews:
