@@ -12,8 +12,8 @@ from abc import ABC, abstractmethod
 from typing import Any
 
 import pandas as pd
-import requests
 
+from .retry import request_with_retry
 from .robots_guard import RobotsGuard
 
 # Schema fields every review scraper must produce (sentiment-phase contract):
@@ -81,25 +81,14 @@ class BaseReviewScraper(ABC):
 
     def _request_with_retry(self, url: str) -> str:
         """GET *url* with exponential backoff; raises after *retry_count* tries."""
-        last_exc: Exception | None = None
-        for attempt in range(self.retry_count):
-            try:
-                resp = requests.get(url, headers=self.headers, timeout=self.timeout)
-                resp.raise_for_status()
-                return resp.text
-            except requests.RequestException as exc:
-                last_exc = exc
-                backoff = self.delay * (2**attempt)
-                self.logger.warning(
-                    "Attempt %d/%d failed (%s) — backing off %.1fs",
-                    attempt + 1,
-                    self.retry_count,
-                    exc,
-                    backoff,
-                )
-                time.sleep(backoff)
-        assert last_exc is not None  # for type-checkers
-        raise last_exc
+        return request_with_retry(
+            url,
+            headers=self.headers,
+            timeout=self.timeout,
+            retry_count=self.retry_count,
+            delay=self.delay,
+            logger=self.logger,
+        )
 
     # ------------------------------------------------------------------
     # Main loop

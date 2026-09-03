@@ -120,6 +120,10 @@ annotated config.
 | Symptom | Cause | Fix |
 | ------- | ----- | --- |
 | `ModuleNotFoundError: src` when running scripts | project root not on `sys.path` | run from the repo root, or `sys.path.insert(0, project_root)` |
+| `NameError: PipelineOrchestrator` in the notebook | Option B ran before the import cell | fixed in v1.2.2 — the cell is now self-contained; otherwise run cells top-to-bottom |
+| Tokopedia `Read timed out` **from Colab** (every page) | datacenter-IP throttling — Tokopedia slow-walls Google cloud IPs | expected; the scrapers now retry 3× with backoff, but reliable collection needs a residential IP (our validated runs). Analysis mode needs no scraping at all |
+| Shopee `session not created: Chrome instance exited` **from Colab** | Colab has no Chrome browser | `!apt-get -qq update && !apt-get -qq install chromium chromium-driver`, then point Selenium at `/usr/bin/chromium`. Shopee remains deferred regardless (anti-bot risk) |
+| Blibli `403 Forbidden` **from Colab** | WAF blocks datacenter IPs | expected; Blibli's products-only path needs a residential IP and is unvalidated live by design |
 | `RobotsGuard` blocks every URL | robots.txt unreachable + `fail_open: false` | check connectivity; snapshots in `docs/compliance/robots/` are used first and avoid the network entirely |
 | Notebook generates synthetic data | snapshot CSVs missing | ensure `data/snapshot/*.csv` exists (they ship with the repo) |
 | `ValueError: corpus contains a single class` | review corpus all-positive | expected with small corpora; the pipeline skips training and logs it — collect more/broader reviews |

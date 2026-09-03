@@ -5,10 +5,10 @@ from __future__ import annotations
 import re
 from typing import Any
 
-import requests
 from bs4 import BeautifulSoup, Tag
 
 from .base_scraper import BaseScraper
+from .retry import request_with_retry
 
 
 class BlibliScraper(BaseScraper):
@@ -33,9 +33,14 @@ class BlibliScraper(BaseScraper):
         return f"{base}/c/{slug}"
 
     def fetch_page(self, url: str) -> str:
-        resp = requests.get(url, headers=self.headers, timeout=self.timeout)
-        resp.raise_for_status()
-        return resp.text
+        return request_with_retry(
+            url,
+            headers=self.headers,
+            timeout=self.timeout,
+            retry_count=self.retry_count,
+            delay=self.delay,
+            logger=self.logger,
+        )
 
     def get_next_page_url(self, current_url: str) -> str | None:
         match = re.search(r"[?&]page=(\d+)", current_url)
