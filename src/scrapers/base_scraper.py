@@ -9,6 +9,8 @@ from typing import Any
 
 import pandas as pd
 
+from .robots_guard import RobotsGuard
+
 
 class BaseScraper(ABC):
     """Contract that every concrete scraper must fulfil."""
@@ -27,6 +29,7 @@ class BaseScraper(ABC):
         self.retry_count: int = config.get("retry_count", 3)
         self.delay: float = config.get("delay", 2.0)
         self.logger = logging.getLogger(f"scraper.{self.platform_name}")
+        self.robots_guard = RobotsGuard(config.get("robots", {}))
 
     # ------------------------------------------------------------------
     # Abstract methods — each platform MUST implement these
@@ -63,6 +66,12 @@ class BaseScraper(ABC):
         url = self._build_search_url(category)
 
         for page in range(1, max_pages + 1):
+            if not self.robots_guard.is_allowed(url):
+                self.logger.warning(
+                    "robots.txt disallows %s — stopping %s scrape", url, self.platform_name
+                )
+                break
+
             self.logger.info("Page %d/%d — %s", page, max_pages, url)
             try:
                 html = self.fetch_page(url)
@@ -80,7 +89,12 @@ class BaseScraper(ABC):
             if not next_url:
                 break
             url = next_url
-            time.sleep(self.delay)
+            time.sleep(self._effective_delay(url))
 
         self.logger.info("Scraped %d products from %s", len(products), self.platform_name)
         return pd.DataFrame(products)
+
+    def _effective_delay(self, url: str) -> float:
+        """Honour the platform's Crawl-delay if stricter than our own."""
+        crawl_delay = self.robots_guard.crawl_delay(url) or 0.0
+        return max(self.delay, crawl_delay)

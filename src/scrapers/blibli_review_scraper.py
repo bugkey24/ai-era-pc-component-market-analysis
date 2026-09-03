@@ -1,7 +1,9 @@
 """Blibli review scraper — static HTML via Requests + BeautifulSoup.
 
-Selectors are best-effort against Blibli's current markup and MUST be
-re-validated against live pages before production use (see docs/04).
+⚠️ **ROBOTS-BLOCKED — REFERENCE ONLY.** Blibli's robots.txt disallows
+``/p/*/pr*``, which matches every ``{product}/reviews`` URL. This class
+is kept for documentation completeness; it sets ``robots_permitted = False``
+so orchestration layers skip it. Do not enable without re-verification.
 """
 
 from __future__ import annotations
@@ -15,9 +17,10 @@ from .base_review_scraper import BaseReviewScraper
 
 
 class BlibliReviewScraper(BaseReviewScraper):
-    """Scrape product reviews from Blibli."""
+    """Scrape product reviews from Blibli. Robots-blocked — see docstring."""
 
     platform_name = "blibli"
+    robots_permitted = False
 
     def build_review_url(self, product_url: str) -> str:
         base = product_url.rstrip("/")

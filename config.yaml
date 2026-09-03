@@ -13,19 +13,26 @@ scraping:
   retry_count: 3
   timeout: 10
   user_agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+  robots:
+    enabled: true          # every fetch is robots-checked before requesting
+    fail_open: false       # unreachable robots.txt -> block, never guess
+    snapshot_dir: "docs/compliance/robots"
   platforms:
     - name: tokopedia
       enabled: true
       method: static
-      base_url: "https://www.tokopedia.com/search"
+      base_url: "https://www.tokopedia.com"   # search uses /find/{cat}?page=N (robots-allowed)
+      reviews_enabled: true                    # robots explicitly allows /*/review
     - name: shopee
       enabled: true
       method: dynamic
-      base_url: "https://shopee.co.id/search"
+      base_url: "https://shopee.co.id"
+      reviews_enabled: true                    # ungoverned (URL fragments) — anti-bot risk
     - name: blibli
       enabled: true
       method: static
-      base_url: "https://www.blibli.com/search"
+      base_url: "https://www.blibli.com"       # discovery via /c/ category pages, NOT /search (robots-disallowed)
+      reviews_enabled: false                   # robots disallows /p/*/pr* — reviews are blocked
 
 preprocessing:
   handle_missing: "drop"
