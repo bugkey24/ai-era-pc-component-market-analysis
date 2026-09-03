@@ -302,7 +302,8 @@ class ShopeeScraper(BaseScraper):
         return webdriver.Chrome(options=options)
 
     def _build_search_url(self, category: str) -> str:
-        return f"https://shopee.co.id/search?keyword={category}"
+        base = self.config.get("base_url", "https://shopee.co.id")
+        return f"{base}/search?keyword={category}"
 
     # ... other methods
 ```

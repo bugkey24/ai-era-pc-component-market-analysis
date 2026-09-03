@@ -68,10 +68,12 @@ from sklearn.preprocessing import LabelEncoder
 # Visualization
 import matplotlib.pyplot as plt
 import seaborn as sns
-import plotly.express as px
-import plotly.graph_objects as go
 from wordcloud import WordCloud
 ```
+
+> Note: `plotly` and `webdriver-manager` were removed from the dependency
+> set — the Visualizer uses matplotlib/seaborn only, and Selenium Manager
+> (built into selenium ≥ 4.6) manages driver binaries natively.
 
 ---
 
@@ -82,17 +84,12 @@ from wordcloud import WordCloud
 from google.colab import drive
 drive.mount('/content/drive')
 
-# Install additional packages
-!pip install selenium
-!pip install webdriver-manager
-!pip install wordcloud
-!pip install plotly
+# Install project dependencies (selenium's Selenium Manager handles drivers)
+!pip install -q -r requirements.txt
 
 # Download NLTK data
 import nltk
-nltk.download('punkt')
 nltk.download('stopwords')
-nltk.download('vader_lexicon')
 ```
 
 ---

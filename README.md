@@ -48,7 +48,7 @@ The AI boom has diverted semiconductor production away from consumer-grade compo
 - **Data:** Pandas, NumPy
 - **NLP/ML:** NLTK, scikit-learn (LinearSVC, TF-IDF)
 - **Decision Support:** Custom AHP-TOPSIS implementation
-- **Visualization:** Matplotlib, Seaborn, Plotly, WordCloud
+- **Visualization:** Matplotlib, Seaborn, WordCloud
 - **Environment:** Google Colab
 
 ## Project Structure
