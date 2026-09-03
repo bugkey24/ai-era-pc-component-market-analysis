@@ -21,9 +21,8 @@ import logging
 import re
 from typing import Any
 
-import requests
-
 from .base_scraper import BaseScraper
+from .retry import request_with_retry
 
 logger = logging.getLogger("scraper.tokopedia")
 
@@ -78,9 +77,15 @@ class TokopediaScraper(BaseScraper):
         return f"{base}/find/{keyword}?page=1"
 
     def fetch_page(self, url: str) -> str:
-        resp = requests.get(url, headers=self.headers, timeout=self.timeout)
-        resp.raise_for_status()
-        return resp.text
+        """Fetch with retry/backoff — one timeout no longer ends a category."""
+        return request_with_retry(
+            url,
+            headers=self.headers,
+            timeout=self.timeout,
+            retry_count=self.retry_count,
+            delay=self.delay,
+            logger=self.logger,
+        )
 
     def get_next_page_url(self, current_url: str) -> str | None:
         match = re.search(r"[?&]page=(\d+)", current_url)

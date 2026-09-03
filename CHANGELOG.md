@@ -6,6 +6,36 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [1.2.2] - 2026-09-03
+
+### Context
+
+Live scraping attempted from Google Colab (datacenter IPs) failed exactly
+as documented: Tokopedia timeouts, Shopee missing-Chrome, Blibli 403 —
+the pipeline degraded gracefully to 0 rows. This release hardens the code
+for that environment and makes the notebook honest about it.
+
+### Added
+
+- **Shared retry module** (`src/scrapers/retry.py`) — product scrapers
+  (`TokopediaScraper`, `BlibliScraper`) now retry connection errors,
+  timeouts, 5xx and 429 with exponential backoff (previously one timeout
+  ended a whole category; only the review scrapers retried). 4xx fails
+  fast — backing off cannot heal a blocked URL.
+- Notebook Option B is **self-contained** (imports inside the cell — no
+  more `NameError` from cell-order) and carries explicit warnings about
+  datacenter-IP expectations per platform.
+- `docs/10` troubleshooting rows for every error observed from Colab:
+  Tokopedia timeouts, Shopee `session not created` (+ Chrome install
+  snippet), Blibli 403.
+
+### Changed
+
+- `BaseReviewScraper._request_with_retry` delegates to the shared module
+  (behaviour unchanged; tests re-pointed).
+
+---
+
 ## [1.2.1] - 2026-09-03
 
 ### Added
