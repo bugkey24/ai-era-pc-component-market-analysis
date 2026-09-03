@@ -111,6 +111,22 @@
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
 
+### Diagram notes (additions since v1.0)
+
+- **Review-scraping layer (Layer 1, parallel):** a second hierarchy —
+  `BaseReviewScraper` ABC → `TokopediaReviewScraper`, `ShopeeReviewScraper`
+  (Selenium), `BlibliReviewScraper` — with its own registry and
+  `get_review_scraper()` factory. Reviews are a separate entity
+  (one product → many reviews) with a shared `REVIEW_SCHEMA`.
+- **Compliance gate:** every Layer 1 fetch (products *and* reviews) is
+  checked by `RobotsGuard` *before* the HTTP request is made — disallowed
+  URLs are logged and skipped, never requested; `Crawl-delay` is honoured.
+- **NormalizationPredictor (Layer 3):** scenario-based Phase 6 prediction
+  module (bull / base / bear) — see §3.10.
+- **Orchestrator:** the pipeline now runs **7 phases** — scraping,
+  preprocessing, statistics, sentiment, AHP-TOPSIS, normalization
+  prediction, visualization (see §3.7).
+
 ---
 
 ## 2. Data Pipeline Architecture
@@ -162,6 +178,9 @@ class BaseScraper(ABC):
         self.headers = {'User-Agent': config.get('user_agent', 'Mozilla/5.0')}
         self.timeout = config.get('timeout', 10)
         self.retry_count = config.get('retry_count', 3)
+        self.delay = config.get('delay', 2.0)
+        # Robots gate — checked before every fetch (RFC 9309, fail-closed)
+        self.robots_guard = RobotsGuard(config.get('robots', {}))
 
     @abstractmethod
     def fetch_page(self, url: str) -> str:
@@ -189,6 +208,10 @@ class BaseScraper(ABC):
         url = self._build_search_url(category)
 
         for page in range(max_pages):
+            if not self.robots_guard.is_allowed(url):
+                self.logger.warning("robots.txt disallows %s — stopping", url)
+                break
+
             html = self.fetch_page(url)
             items = self._extract_items(html)
 
@@ -202,9 +225,14 @@ class BaseScraper(ABC):
             if not next_url:
                 break
             url = next_url
-            time.sleep(self.config.get('delay', 2))
+            time.sleep(self._effective_delay(url))
 
         return pd.DataFrame(products)
+
+    def _effective_delay(self, url: str) -> float:
+        """Honour the platform's Crawl-delay if stricter than our own."""
+        crawl_delay = self.robots_guard.crawl_delay(url) or 0.0
+        return max(self.delay, crawl_delay)
 
     def _extract_items(self, html: str) -> List:
         """Extract product items from HTML (implementation varies)."""
@@ -234,12 +262,15 @@ class TokopediaScraper(BaseScraper):
             'rating': self._extract_rating(html_element),
         }
 
+    def _build_search_url(self, category: str) -> str:
+        # Robots-compliant surface: Allow: /find/*?page (docs/compliance).
+        # The legacy /search?q= path is DISALLOWED by robots.txt.
+        base = self.config.get("base_url", "https://www.tokopedia.com")
+        return f"{base}/find/{category}?page=1"
+
     def get_next_page_url(self, current_url: str) -> Optional[str]:
         # Parse pagination from Tokopedia
         pass
-
-    def _build_search_url(self, category: str) -> str:
-        return f"https://www.tokopedia.com/search?q={category}&st=product"
 
 
 class ShopeeScraper(BaseScraper):
@@ -557,12 +588,11 @@ class PipelineOrchestrator:
         return logger
 
     def run_full_pipeline(self):
-        """Execute all phases sequentially."""
+        """Execute all 7 phases sequentially."""
         self.logger.info("Starting full pipeline...")
 
         self.logger.info("Phase 1: Scraping...")
-        scrapers = self._initialize_scrapers()
-        self.data = self._run_scraping(scrapers)
+        self.data = self._run_scraping()
 
         self.logger.info("Phase 2: Preprocessing...")
         preprocessor = DataPreprocessor(self.data)
@@ -577,13 +607,18 @@ class PipelineOrchestrator:
         stats = analyzer.describe().correlation_matrix()
 
         self.logger.info("Phase 4: Sentiment Analysis...")
-        sentiment = SentimentAnalyzer()
-        # ... train and predict
+        # Trains on data/raw/reviews_*.csv when present (weak supervision
+        # from review ratings); merges per-product sentiment_score back
+        self._run_sentiment()
 
         self.logger.info("Phase 5: DSS Processing...")
         dss_result = self._run_dss()
 
-        self.logger.info("Phase 6: Visualization...")
+        self.logger.info("Phase 6: Normalization prediction...")
+        # NormalizationPredictor scenarios on the median price
+        self._run_prediction()
+
+        self.logger.info("Phase 7: Visualization...")
         visualizer = Visualizer(self.data)
         visualizer.create_all_plots()
 
@@ -622,6 +657,115 @@ class PipelineOrchestrator:
 
 > **Fix applied:** `_setup_logger` now uses a named logger (`pipeline`) and only attaches handlers once, preventing root logger pollution. `_run_scraping` reads from config properly instead of a hardcoded key.
 
+### 3.8 RobotsGuard (Compliance Gate)
+
+Full implementation: [`src/scrapers/robots_guard.py`](../src/scrapers/robots_guard.py).
+Rules analysis: [`docs/compliance/README.md`](./compliance/README.md).
+
+```python
+class RobotsGuard:
+    """Check fetch permissions against a platform's robots.txt (RFC 9309)."""
+
+    def __init__(self, config: dict):
+        # enabled (default True), fail_open (default False),
+        # snapshot_dir (docs/compliance/robots), timeout
+        ...
+
+    def is_allowed(self, url: str, user_agent: str = "*") -> bool: ...
+    def crawl_delay(self, url: str, user_agent: str = "*") -> float | None: ...
+```
+
+Key behaviours:
+
+- **RFC 9309 longest-match engine** — matches path + query string, honours
+  `*` wildcards and `$` end-anchors, ties go to the least restrictive rule.
+  `urllib.robotparser` was rejected: it drops the query string and
+  mis-evaluates `$`-anchored rules (would wrongly permit blocked URLs).
+- **Resolution order per origin:** committed snapshot
+  (`docs/compliance/robots/{platform}.robots.txt`) → live
+  `{origin}/robots.txt` → unreachable ⇒ **fail-closed** (block) unless
+  `fail_open: true`.
+- **Status-code semantics (RFC 9309 §2.3):** 404 → no restrictions;
+  401/403 → full block.
+- Both scrape loops (`BaseScraper.scrape`, `BaseReviewScraper.fetch_reviews`)
+  consult the guard **before every fetch** and honour `Crawl-delay` via
+  `_effective_delay`.
+
+### 3.9 BaseReviewScraper (Abstract Base Class)
+
+Reviews are a distinct entity from products (one product → many reviews),
+so they get their own hierarchy instead of overloading `BaseScraper`.
+
+```python
+REVIEW_SCHEMA = [
+    "product_id", "review_text", "rating",
+    "review_date", "helpful_count", "source",
+]
+
+class BaseReviewScraper(ABC):
+    """Contract that every concrete review scraper must fulfil."""
+
+    platform_name: str
+    robots_permitted: bool = True  # set False when robots.txt forbids reviews
+
+    @abstractmethod
+    def build_review_url(self, product_url: str) -> str: ...
+    @abstractmethod
+    def fetch_page(self, url: str) -> str: ...
+    @abstractmethod
+    def parse_review(self, element: Any) -> Dict[str, Any]: ...
+    @abstractmethod
+    def get_next_page_url(self, current_url: str) -> Optional[str]: ...
+
+    def fetch_reviews(self, product_url: str, product_id: str = "",
+                      max_pages: int = 2) -> pd.DataFrame:
+        """Robots-checked loop with dedup on (review_text, review_date)."""
+```
+
+Concrete implementations:
+
+| Class | Transport | Notes |
+| ----- | --------- | ----- |
+| `TokopediaReviewScraper` | Requests + BeautifulSoup | **Primary review source** — robots explicitly allows `/*/review` |
+| `ShopeeReviewScraper` | Selenium | Reviews render via URL fragments — ungoverned by robots; anti-bot risk |
+| `BlibliReviewScraper` | Requests + BeautifulSoup | `robots_permitted = False` — no sanctioned review surface; reference only |
+
+Registry/factory mirror the product side: `REVIEW_SCRAPER_REGISTRY`,
+`get_review_scraper(platform, config)`.
+
+### 3.10 NormalizationPredictor (Phase 6)
+
+Full implementation: [`src/analysis/normalization_predictor.py`](../src/analysis/normalization_predictor.py).
+
+```python
+@dataclass(frozen=True)
+class Scenario:
+    name: str                       # bull / base / bear
+    description: str
+    timeframe: str                  # e.g. "2027-2028"
+    recovery_probability: float     # probabilities must sum to 1.0
+    recommendation: str
+    investment_multiplier: float    # AI-investment intensity for this scenario
+    fab_relief: float               # fab-capacity relief factor (0-1)
+
+class NormalizationPredictor:
+    """Probability-weighted price-normalization scenarios."""
+
+    @staticmethod
+    def predict_normalization(prices, investment_rate, fab_completion,
+                              base_price=0.0) -> float | np.ndarray:
+        """base_price + (price * investment_rate * 1.5 - fab_completion * 0.8)"""
+
+    def run_scenarios(self, current_price: float, base_price: float = 0.0) -> dict: ...
+    def summarize(self, current_price: float, **kwargs) -> dict: ...
+```
+
+Scenario semantics (per docs/03 Phase 6 and docs/07.4): **bull** = bull
+market for *sellers* (aggressive AI investment, highest projected price,
+latest normalization); **bear** = bubble bursts (surplus fab capacity,
+earliest normalization). The pipeline applies the predictor in Phase 6 and
+persists the result to `outputs/prediction.json`.
+
 ---
 
 ## 4. Design Principles
@@ -641,20 +785,35 @@ class PipelineOrchestrator:
 ## 5. File Structure
 
 ```
-spk-scraping-harga-komponen-ai/
+ai-era-pc-component-market-analysis/
 │
 ├── README.md
-├── requirements.txt
-├── config.yaml
+├── CHANGELOG.md
+├── LICENSE
+├── requirements.txt            # runtime dependencies
+├── requirements-dev.txt        # test/CI tooling (pytest, ruff, pre-commit, nbformat)
+├── pyproject.toml              # project metadata, pytest + ruff configuration
+├── .pre-commit-config.yaml     # whitespace/yaml checks, ruff fix+format
+├── config.yaml                 # centralized configuration
+│
+├── .github/
+│   └── workflows/
+│       └── ci.yml              # ruff lint+format, pytest (3.10/3.11/3.12) + coverage gate
 │
 ├── src/
 │   ├── __init__.py
+│   ├── pipeline.py             # PipelineOrchestrator (7 phases)
 │   ├── scrapers/
-│   │   ├── __init__.py
+│   │   ├── __init__.py         # registries + factories (products & reviews)
 │   │   ├── base_scraper.py
+│   │   ├── robots_guard.py     # RFC 9309 compliance gate
 │   │   ├── tokopedia_scraper.py
 │   │   ├── shopee_scraper.py
-│   │   └── blibli_scraper.py
+│   │   ├── blibli_scraper.py
+│   │   ├── base_review_scraper.py
+│   │   ├── tokopedia_review_scraper.py
+│   │   ├── shopee_review_scraper.py
+│   │   └── blibli_review_scraper.py   # robots-blocked — reference only
 │   ├── preprocessing/
 │   │   ├── __init__.py
 │   │   ├── data_preprocessor.py
@@ -662,7 +821,8 @@ spk-scraping-harga-komponen-ai/
 │   ├── analysis/
 │   │   ├── __init__.py
 │   │   ├── statistical_analyzer.py
-│   │   └── sentiment_analyzer.py
+│   │   ├── sentiment_analyzer.py
+│   │   └── normalization_predictor.py
 │   ├── dss/
 │   │   ├── __init__.py
 │   │   ├── ahp_processor.py
@@ -672,28 +832,46 @@ spk-scraping-harga-komponen-ai/
 │   │   └── visualizer.py
 │   └── utils/
 │       ├── __init__.py
-│       ├── logger.py
-│       └── helpers.py
+│       ├── logger.py           # re-exports setup_logger (documented layout)
+│       └── helpers.py          # load_config, setup_logger
+│
+├── tests/                      # 149 tests (pytest; offline, no network)
+│   ├── conftest.py
+│   ├── test_ahp.py
+│   ├── test_topsis.py
+│   ├── test_preprocessing.py
+│   ├── test_sentiment.py
+│   ├── test_scrapers.py
+│   ├── test_review_scrapers.py
+│   ├── test_robots_guard.py
+│   ├── test_analysis_and_utils.py
+│   ├── test_normalization.py
+│   ├── test_visualizer.py
+│   └── test_pipeline_integration.py
 │
 ├── notebooks/
-│   └── main_pipeline.ipynb
+│   └── main_pipeline.ipynb     # 11-section Colab pipeline (headless-verified)
+│
+├── docs/
+│   ├── 01-overview.md … 08-git-workflow.md
+│   └── compliance/
+│       ├── README.md           # robots.txt analysis + verdicts
+│       └── robots/
+│           ├── tokopedia.robots.txt
+│           ├── shopee.robots.txt
+│           └── blibli.robots.txt
 │
 ├── data/
-│   ├── raw/
-│   │   ├── tokopedia_gpu.csv
-│   │   ├── tokopedia_ram.csv
-│   │   ├── shopee_gpu.csv
-│   │   └── blibli_ssd.csv
+│   ├── raw/                    # scraped CSVs + reviews_*.csv (sentiment input)
 │   └── processed/
 │       └── cleaned_data.csv
 │
 ├── outputs/
-│   ├── visualizations/
-│   │   ├── price_trends.png
-│   │   ├── sentiment_distribution.png
-│   │   └── ranking_results.png
+│   ├── visualizations/         # price_trends, correlation_heatmap, ranking_results, …
+│   ├── cleaned_data.csv
 │   ├── rankings.csv
-│   └── sentiment_results.json
+│   ├── statistics.json
+│   └── prediction.json
 │
 └── logs/
     └── pipeline.log
@@ -707,10 +885,13 @@ spk-scraping-harga-komponen-ai/
 | ---------------------- | -------------------------------- | ------------------------------ |
 | **Scraping**           | Python Requests + BeautifulSoup  | Static HTML parsing            |
 | **Dynamic Content**    | Selenium WebDriver               | JavaScript-rendered content    |
-| **Data Processing**    | Pandas, NumPy                    | Data manipulation              |
+| **Compliance**         | RobotsGuard (RFC 9309 engine)    | robots.txt checks before every fetch |
+| **Data Processing**    | Pandas, NumPy, SciPy             | Data manipulation, statistics  |
 | **Sentiment Analysis** | NLTK, scikit-learn (SVM)         | Text classification            |
-| **Visualization**      | Matplotlib, Seaborn, Plotly      | Data visualization             |
+| **Visualization**      | Matplotlib, Seaborn, WordCloud   | Data visualization             |
 | **DSS Methods**        | Custom AHP-TOPSIS implementation | Multi-criteria decision making |
+| **Testing**            | pytest + pytest-cov (149 tests)  | Offline test suite, coverage gate ≥70% |
+| **Quality Tooling**    | ruff, pre-commit, GitHub Actions | Lint, format, CI on 3.10/3.11/3.12 |
 | **Environment**        | Google Colab                     | Cloud-based execution          |
 
 ---
@@ -728,22 +909,34 @@ beautifulsoup4>=4.12.0
 lxml>=4.9.0
 
 # Web Scraping
+# (Selenium Manager, built into selenium>=4.6, handles driver binaries)
 selenium>=4.15.0
-webdriver-manager>=4.0.0
 
 # NLP & Machine Learning
 scikit-learn>=1.3.0
 nltk>=3.8.0
+scipy>=1.11.0
 
 # Visualization
 matplotlib>=3.7.0
 seaborn>=0.12.0
-plotly>=5.17.0
 wordcloud>=1.9.0
 
 # Utilities
 pyyaml>=6.0.0
-tqdm>=4.66.0
+```
+
+### requirements-dev.txt
+
+```txt
+# Development & CI tooling (not needed at runtime)
+pytest>=8.0
+pytest-cov>=5.0
+ruff>=0.6
+pre-commit>=3.7
+nbformat>=5.10
+nbclient>=0.10
+ipykernel>=6.29
 ```
 
 ### config.yaml
@@ -764,19 +957,26 @@ scraping:
   retry_count: 3
   timeout: 10
   user_agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+  robots:
+    enabled: true          # every fetch is robots-checked before requesting
+    fail_open: false       # unreachable robots.txt -> block, never guess
+    snapshot_dir: "docs/compliance/robots"
   platforms:
     - name: tokopedia
       enabled: true
       method: static
-      base_url: "https://www.tokopedia.com/search"
+      base_url: "https://www.tokopedia.com"   # search uses /find/{cat}?page=N (robots-allowed)
+      reviews_enabled: true                    # robots explicitly allows /*/review
     - name: shopee
       enabled: true
       method: dynamic
-      base_url: "https://shopee.co.id/search"
+      base_url: "https://shopee.co.id"
+      reviews_enabled: true                    # ungoverned (URL fragments) — anti-bot risk
     - name: blibli
       enabled: true
       method: static
-      base_url: "https://www.blibli.com/search"
+      base_url: "https://www.blibli.com"       # discovery via /c/ category pages, NOT /search (robots-disallowed)
+      reviews_enabled: false                   # robots-blocked review surface — see docs/compliance
 
 preprocessing:
   handle_missing: "drop"

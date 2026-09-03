@@ -78,27 +78,27 @@ Scenario Analysis:
 
 ### 2.1 Pre-Implementation (Week 1)
 
-- [ ] Select and research target websites
-- [ ] Check robots.txt policies
-- [ ] Install required libraries
-- [ ] Set up Google Colab environment
-- [ ] Create project structure
+- [x] Select and research target websites
+- [x] Check robots.txt policies *(snapshots + verdicts in `docs/compliance/`)*
+- [x] Install required libraries *(requirements.txt + requirements-dev.txt)*
+- [x] Set up Google Colab environment *(notebooks/main_pipeline.ipynb)*
+- [x] Create project structure
 
 ### 2.2 Implementation (Week 2-3)
 
-- [ ] Develop scraping functions for each platform
-- [ ] Implement data cleaning pipeline
-- [ ] Build statistical analysis module
-- [ ] Implement sentiment analysis (SVM)
-- [ ] Code AHP-TOPSIS algorithm
-- [ ] Create visualization functions
+- [x] Develop scraping functions for each platform *(products + reviews, robots-gated)*
+- [x] Implement data cleaning pipeline
+- [x] Build statistical analysis module
+- [x] Implement sentiment analysis (SVM) *(training data pending — see 2.3)*
+- [x] Code AHP-TOPSIS algorithm
+- [x] Create visualization functions
 
 ### 2.3 Post-Implementation (Week 4)
 
-- [ ] Run complete pipeline
+- [ ] Run complete pipeline against live platforms *(pending — selectors need live validation)*
 - [ ] Validate results
-- [ ] Create documentation
-- [ ] Generate visualizations
+- [x] Create documentation
+- [ ] Generate visualizations from live data
 - [ ] Write conclusions and recommendations
 - [ ] Share Google Colab notebook
 

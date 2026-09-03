@@ -42,6 +42,19 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   (≥4 → positive, ≤2 → negative, else neutral); per-product positive-rate
   is merged back as `sentiment_score`.
 
+### Documentation
+
+- `docs/02-architecture.md` synced to current state: review-scraping layer,
+  `RobotsGuard`, `NormalizationPredictor`, 7-phase orchestrator, real file
+  structure (tests/, CI, compliance dir), corrected dependency list.
+- `docs/01-overview.md` deliverables reflect actual outputs.
+- `docs/03-methodology.md` — Phase 1 and Phase 6 implementation-status notes.
+- `docs/04-data-collection.md` — review-collection section, Blibli
+  restrictions, review schema.
+- `docs/05-results-and-checklist.md` — checklist ticked to actual progress.
+- `docs/07-references.md` — RFC 9309 added.
+- `README.md` — structure tree and docs index updated.
+
 ---
 
 ## [1.1.0] - 2026-09-03

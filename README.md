@@ -55,19 +55,23 @@ The AI boom has diverted semiconductor production away from consumer-grade compo
 
 ```
 ├── src/
-│   ├── scrapers/          # BaseScraper + platform implementations
+│   ├── scrapers/          # BaseScraper + platform implementations (products & reviews)
+│   │                      # + RobotsGuard: RFC 9309 compliance gate on every fetch
 │   ├── preprocessing/     # DataPreprocessor, FeatureEngineer
-│   ├── analysis/          # StatisticalAnalyzer, SentimentAnalyzer
+│   ├── analysis/          # StatisticalAnalyzer, SentimentAnalyzer, NormalizationPredictor
 │   ├── dss/               # AHPProcessor, TOPSISProcessor
 │   ├── visualization/     # Visualizer
-│   └── utils/             # Logger, helpers
-├── notebooks/             # Colab notebooks
-├── data/raw/              # Scraped CSVs per platform/category
+│   ├── pipeline.py        # 7-phase orchestrator
+│   └── utils/             # Logger, config loading
+├── tests/                 # 149 offline tests (pytest, CI-gated)
+├── notebooks/             # main_pipeline.ipynb (Colab entry point)
+├── data/raw/              # Scraped CSVs per platform/category + reviews_*.csv
 ├── data/processed/        # Cleaned datasets
-├── outputs/               # Visualizations, rankings, sentiment results
-├── docs/                  # Detailed documentation
+├── outputs/               # Charts, rankings, statistics.json, prediction.json
+├── docs/                  # Detailed documentation + compliance/robots analysis
 ├── config.yaml            # Centralized configuration
-└── requirements.txt       # Python dependencies
+├── requirements.txt       # Runtime dependencies
+└── requirements-dev.txt   # Test/CI tooling
 ```
 
 ## Documentation
@@ -82,6 +86,7 @@ The AI boom has diverted semiconductor production away from consumer-grade compo
 | [docs/06-timeline.md](docs/06-timeline.md) | 4-week implementation timeline |
 | [docs/07-references.md](docs/07-references.md) | References, required libraries, Colab setup |
 | [docs/08-git-workflow.md](docs/08-git-workflow.md) | Branching strategy, commit conventions, merge rules |
+| [docs/compliance/README.md](docs/compliance/README.md) | robots.txt snapshots + per-platform scraping verdicts |
 
 ## Getting Started
 
