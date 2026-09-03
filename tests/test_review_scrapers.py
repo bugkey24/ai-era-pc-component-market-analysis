@@ -251,8 +251,8 @@ class TestRetryBackoff:
             MagicMock(status_code=200, text="OK", raise_for_status=lambda: None),
         ]
         with (
-            patch("src.scrapers.base_review_scraper.requests.get", side_effect=responses),
-            patch("src.scrapers.base_review_scraper.time.sleep") as mock_sleep,
+            patch("src.scrapers.retry.requests.get", side_effect=responses),
+            patch("src.scrapers.retry.time.sleep") as mock_sleep,
         ):
             html = scraper._request_with_retry("https://example.com")
         assert html == "OK"
@@ -262,10 +262,10 @@ class TestRetryBackoff:
         scraper = TokopediaReviewScraper(review_config)
         with (
             patch(
-                "src.scrapers.base_review_scraper.requests.get",
+                "src.scrapers.retry.requests.get",
                 side_effect=requests.exceptions.ConnectionError("down"),
             ),
-            patch("src.scrapers.base_review_scraper.time.sleep"),
+            patch("src.scrapers.retry.time.sleep"),
         ):
             with pytest.raises(requests.exceptions.ConnectionError):
                 scraper._request_with_retry("https://example.com")
@@ -278,8 +278,40 @@ class TestRetryBackoff:
             MagicMock(status_code=200, text="OK", raise_for_status=lambda: None),
         ]
         with (
-            patch("src.scrapers.base_review_scraper.requests.get", side_effect=responses),
-            patch("src.scrapers.base_review_scraper.time.sleep") as mock_sleep,
+            patch("src.scrapers.retry.requests.get", side_effect=responses),
+            patch("src.scrapers.retry.time.sleep") as mock_sleep,
         ):
             scraper._request_with_retry("https://example.com")
         assert mock_sleep.call_args[0][0] == 1.0 * (2**0)  # base delay, first retry
+
+    def test_client_errors_not_retried(self, review_config):
+        """4xx will not heal with backoff — fail immediately, no sleep."""
+        scraper = TokopediaReviewScraper(review_config)
+        error = requests.exceptions.HTTPError()
+        error.response = MagicMock(status_code=404)
+        responses = [
+            MagicMock(status_code=404, raise_for_status=lambda: (_ for _ in ()).throw(error))
+        ]
+        with (
+            patch("src.scrapers.retry.requests.get", side_effect=responses),
+            patch("src.scrapers.retry.time.sleep") as mock_sleep,
+        ):
+            with pytest.raises(requests.exceptions.HTTPError):
+                scraper._request_with_retry("https://example.com")
+        mock_sleep.assert_not_called()
+
+    def test_product_scrapers_retry_timeouts(self, review_config):
+        """Live Colab finding: a single timeout must not end a category."""
+        from src.scrapers import TokopediaScraper
+
+        scraper = TokopediaScraper(review_config)
+        responses = [
+            requests.exceptions.ReadTimeout("slow"),
+            MagicMock(status_code=200, text="<html>cache</html>", raise_for_status=lambda: None),
+        ]
+        with (
+            patch("src.scrapers.retry.requests.get", side_effect=responses),
+            patch("src.scrapers.retry.time.sleep"),
+        ):
+            html = scraper.fetch_page("https://www.tokopedia.com/find/rtx?page=1")
+        assert "cache" in html
