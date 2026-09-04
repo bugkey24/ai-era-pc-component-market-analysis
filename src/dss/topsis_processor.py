@@ -104,12 +104,23 @@ class TOPSISProcessor:
             {
                 "Alternative": range(self.n_alternatives),
                 "Score": self._scores.round(4),
-                "Rank": self._scores.argsort()[::-1] + 1,
+                "Rank": self._rank_positions(),
             }
         )
         df = df.sort_values("Rank").reset_index(drop=True)
         logger.info("TOPSIS ranking:\n%s", df.head(10).to_string())
         return df
+
+    def _rank_positions(self) -> np.ndarray:
+        """Per-alternative rank (1 = best). Inverse of the descending-order
+        permutation — assigning ``argsort()[::-1] + 1`` directly would give
+        each alternative the *position of the j-th best* instead of its own
+        rank, scrambling Rank vs Score whenever the best alternative is not
+        row 0."""
+        order = np.argsort(self._scores)[::-1]
+        ranks = np.empty(self.n_alternatives, dtype=int)
+        ranks[order] = np.arange(1, self.n_alternatives + 1)
+        return ranks
 
     # ------------------------------------------------------------------
     # Getters

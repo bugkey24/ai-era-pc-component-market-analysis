@@ -42,17 +42,30 @@ _CATEGORY_SEGMENTS = {
 # not the component itself (keyword search surfaces these heavily)
 _EXCLUDE_PATTERNS = re.compile(
     r"holder|riser|bracket|stand|cable|kabel|extension|adapter|support"
-    r"|laptop|notebook|mini pc|pc rakitan|desktop|all.in.one|monitor"
-    r"|motherboard|mobo|enclosure|casing|heatsink|heat sink|baut"
-    r"|ssd cooler|\bcase\b|thickener|vga bracket",
+    r"|laptop|notebook|mini pc|pc rakitan|rakitan|desktop|all.in.one|\baio\b|monitor"
+    r"|motherboard|mainboard|mobo|papan induk|enclosure|casing|heatsink|heat sink|baut"
+    r"|ssd cooler|\bcase\b|thickener|vga bracket|\bbag\b|hardcase|pouch|sleeve"
+    r"|\bto m\.?2\b|\bngff\b|\bto pci\b|\bexpansion card\b"
+    # Whole systems / bundles whose titles omit the word "laptop" or "PC"
+    r"|pc build|\bpc gaming\b|deskmeet|infinite|cheatshot|\bagres\b|meow pc"
+    r"|windows 1[01]|\bw1[01]\b"
+    # Laptop brand / model lines that appear under component breadcrumbs
+    r"|\bloq\b|\bvictus\b|\blegion\b|msi thin|\btuf gaming [aef]\d{2}|anv16|nitro v\b"
+    r"|axioo|xbook|vivobook|zenbook|expertbook",
     re.IGNORECASE,
 )
 
-# Sellers miscategorize listings (e.g. a Radeon GPU under the RAM
-# breadcrumb) — GPU-chip names are never valid RAM/SSD products
+# Sellers list PC motherboards under the RAM/SSD breadcrumbs (boards mention
+# DDR5 / NVMe). Board signatures: socket names, form factors, and chipset
+# tokens that never appear in genuine memory-module or drive names.
+_MOTHERBOARD_SIG = (
+    r"|\blga\s?\d{3,4}\b|\bam[345]\b|\bsocket\b|\b(micro|mini)?\s?-?atx\b|\bitx\b"
+    r"|\bb[67]60|\bz[3467]90|\bh[456]1[01]0|\bb[45]50|\bb[45]60|\ba[56]20|\bx[456]70"
+)
+
 _CROSS_CATEGORY_PATTERNS = {
-    "ram": re.compile(r"\bvga\b|geforce|radeon|\brtx\b|\bgtx\b", re.IGNORECASE),
-    "ssd": re.compile(r"\bvga\b|geforce|radeon|\brtx\b|\bgtx\b", re.IGNORECASE),
+    "ram": re.compile(r"\bvga\b|geforce|radeon|\brtx\b|\bgtx\b" + _MOTHERBOARD_SIG, re.IGNORECASE),
+    "ssd": re.compile(r"\bvga\b|geforce|radeon|\brtx\b|\bgtx\b" + _MOTHERBOARD_SIG, re.IGNORECASE),
 }
 
 

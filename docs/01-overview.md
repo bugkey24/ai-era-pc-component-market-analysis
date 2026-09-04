@@ -95,7 +95,7 @@ Project Deliverables
 │   ├── price_trends.png
 │   ├── correlation_heatmap.png
 │   └── ranking_results.png
-└── Test Suite (149 offline tests, CI-gated)
+└── Test Suite (166 offline tests, CI-gated)
 ```
 
 ---

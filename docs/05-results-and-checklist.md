@@ -102,8 +102,8 @@ Scenario Analysis:
 
 ### 2.3 Post-Implementation (Week 4)
 
-- [x] Run complete pipeline against live platforms *(Tokopedia: 247 products + 42 reviews)*
-- [x] Validate results *(scorecard in `compliance/final-validation-v1-2-0.md`)*
+- [x] Run complete pipeline against live platforms *(Tokopedia: 320 products + 64 reviews)*
+- [x] Validate results *(scorecard in `compliance/final-validation-v1-2-0.md`; collection audit in `compliance/live-validation-2026-09-04.md`)*
 - [x] Create documentation
 - [x] Generate visualizations from live data *(price trends, correlation heatmap, ranking)*
 - [x] Write conclusions and recommendations *(see `09-live-experiment-results.md` §4–5)*

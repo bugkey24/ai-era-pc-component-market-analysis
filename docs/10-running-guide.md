@@ -45,7 +45,7 @@ sufficient; total runtime ≈ 2–3 minutes.
 - **Python ≥ 3.9** — Colab's current runtime satisfies this.
 - The notebook **needs no network access in analysis mode**: the real
   experiment dataset ships in `data/snapshot/`, so results reproduce
-  exactly (368 products, 64 reviews, live TOPSIS ranking embedded in the outputs).
+  exactly (315 cleaned products, 64 reviews, live TOPSIS ranking embedded in the outputs).
 - `pip install -r requirements.txt` covers everything; Selenium and its
   driver management are only needed for collection mode.
 - Google Drive mount is optional — it is only used to persist
@@ -62,7 +62,7 @@ sufficient; total runtime ≈ 2–3 minutes.
 Cell 4 (Option B) enables live scraping. Rules of engagement:
 
 1. Re-read [`compliance/README.md`](./compliance/README.md) first — robots
-   rules change; our snapshots are dated 2026-09-03.
+   rules change; our snapshots are re-verified 2026-09-04.
 2. Keep `max_pages` small (1–3) and `delay ≥ 2.0` s (config defaults).
 3. Tokopedia only, to start: its robots explicitly allows `/find/` and
    `/review` surfaces. Shopee carries anti-bot risk; Blibli's search and
@@ -82,7 +82,7 @@ python -m venv .venv
 .venv\Scripts\activate            # Windows (bash: source .venv/bin/activate)
 pip install -r requirements.txt -r requirements-dev.txt
 
-python -m pytest tests/           # 160 tests
+python -m pytest tests/           # 166 tests
 python -m pytest --cov=src        # 82% coverage
 ```
 
@@ -132,4 +132,5 @@ annotated config.
 | `RobotsGuard` blocks every URL | robots.txt unreachable + `fail_open: false` | check connectivity; snapshots in `docs/compliance/robots/` are used first and avoid the network entirely |
 | Notebook generates synthetic data | snapshot CSVs missing | ensure `data/snapshot/*.csv` exists (they ship with the repo) |
 | `ValueError: corpus contains a single class` | review corpus all-positive | expected with small corpora; the pipeline skips training and logs it — run `scripts/expand_reviews.py` or increase `review_max_pages` in config |
+| Ranking shows Rank 1 with a lower Score than Rank 2 | TOPSIS rank-assignment bug (pre-v1.3.1) | fixed in v1.3.1 — Rank now follows Score ordering exactly; regenerate outputs |
 | Selenium driver errors | Chrome/driver mismatch | Selenium Manager (built-in ≥ 4.6) resolves drivers; verify Chrome is installed |

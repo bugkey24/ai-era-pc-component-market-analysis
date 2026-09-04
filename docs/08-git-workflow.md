@@ -20,7 +20,7 @@ This project uses a lightweight **Git Flow** variant suited for a small team bui
 ```mermaid
 flowchart TD
     subgraph main["main (production-ready, tagged releases)"]
-        M0["v1.2.3"]
+        M0["v1.3.1"]
     end
 
     subgraph develop["develop (integration branch)"]

@@ -1,8 +1,8 @@
 <p align="center">
   <a href="https://github.com/bugkey24/ai-era-pc-component-market-analysis">
-    <img src="https://img.shields.io/badge/AI--Era--PC--Market--Analysis-1.2.1-blue?style=for-the-badge" alt="Version Badge" />
+    <img src="https://img.shields.io/badge/AI--Era--PC--Market--Analysis-1.3.1-blue?style=for-the-badge" alt="Version Badge" />
   </a>
-  <img src="https://img.shields.io/badge/Python-3.8+-yellow?style=for-the-badge&logo=python&logoColor=white" alt="Python Badge" />
+  <img src="https://img.shields.io/badge/Python-3.10+-yellow?style=for-the-badge&logo=python&logoColor=white" alt="Python Badge" />
   <img src="https://img.shields.io/badge/Platform-Google%20Colab-orange?style=for-the-badge&logo=googlecolab&logoColor=white" alt="Colab Badge" />
   <img src="https://img.shields.io/badge/License-MIT--Next-green?style=for-the-badge" alt="License Badge" />
   <a href="https://github.com/bugkey24/ai-era-pc-component-market-analysis/actions/workflows/ci.yml">
@@ -31,21 +31,21 @@ The AI boom has diverted semiconductor production away from consumer-grade compo
 - **When** will prices normalize?
 - **What** is the optimal purchasing strategy for my needs and risk tolerance?
 
-## Results (live experiments, 2026-09-03)
+## Results (live experiments, 2026-09-04)
 
-Collected **247 real product listings** (GPU/RAM/SSD) and a **42-review
-corpus** from Tokopedia in ~30 robots-guarded requests — full findings in
+Collected **320 real product listings** (GPU/RAM/SSD) and a **64-review
+corpus** from Tokopedia in robots-guarded requests — full findings in
 [docs/09-live-experiment-results.md](docs/09-live-experiment-results.md):
 
 | Metric | GPU | RAM | SSD |
 | ------ | --- | --- | --- |
-| Median price (IDR) | 14,633,000 | 8,544,500 | 3,479,000 |
-| AHP-TOPSIS best-value pick | Zotac RTX 3050 6GB (Rp 5.2M) | GSKILL Ripjaws S5 6000MHz | Corsair MP600 Elite 1TB (Rp 3.9M) |
-| Price-normalization outlook | base scenario: **2027-2028** (expected normalized price Rp 13.5M vs current Rp 8.5M median) | | |
+| Median price (IDR) | 9,918,000 | 8,670,000 | 3,388,000 |
+| AHP-TOPSIS best-value pick | MSI RTX 5050 Ventus 2X 8GB (Rp 9.0M) | V-GeN Platinum Rescue DDR5 (Rp 2.1M) | V-GeN Hyper Pro NVMe (Rp 2.0M) |
+| Price-normalization outlook | base scenario: **2027-2028** (expected normalized price Rp 8.59M vs current Rp 5.4M median) | | |
 
-Sentiment on the real corpus: fits and predicts; held-out accuracy **not
-measurable** (e-commerce reviews skew ~all-positive) — honest reporting,
-path to the >75% criterion documented.
+Sentiment on the real corpus: 63 positive / 1 neutral / 0 negative; held-out
+accuracy **not measurable** (e-commerce reviews skew ~all-positive) — honest
+reporting, path to the >75% criterion documented.
 
 ## Approach
 
@@ -79,7 +79,7 @@ path to the >75% criterion documented.
 │   ├── visualization/     # Visualizer
 │   ├── pipeline.py        # 7-phase orchestrator
 │   └── utils/             # Logger, config loading
-├── tests/                 # 160 offline tests (pytest, CI-gated, 82% coverage)
+├── tests/                 # 166 offline tests (pytest, CI-gated, 82% coverage)
 ├── notebooks/             # main_pipeline.ipynb (Colab entry point)
 ├── data/snapshot/         # committed real experiment data (no scraping needed)
 ├── data/raw/              # fresher local scrape output (gitignored)
@@ -106,6 +106,7 @@ path to the >75% criterion documented.
 | [docs/09-live-experiment-results.md](docs/09-live-experiment-results.md) | Live experiment results: collection, statistics, sentiment, ranking, prediction |
 | [docs/10-running-guide.md](docs/10-running-guide.md) | How to run — Colab-first, local setup, collection mode, troubleshooting |
 | [docs/compliance/README.md](docs/compliance/README.md) | robots.txt snapshots + per-platform scraping verdicts |
+| [docs/compliance/live-validation-2026-09-04.md](docs/compliance/live-validation-2026-09-04.md) | Live-collection audit: filters, robots re-verification, corrections |
 | [docs/compliance/final-validation-v1-2-0.md](docs/compliance/final-validation-v1-2-0.md) | Formal success-criteria validation |
 
 ## Getting Started
@@ -124,7 +125,7 @@ experiment data ships in `data/snapshot/`, so no scraping is required
 git clone https://github.com/bugkey24/ai-era-pc-component-market-analysis.git
 cd ai-era-pc-component-market-analysis
 pip install -r requirements.txt -r requirements-dev.txt
-python -m pytest tests/        # 160 tests
+python -m pytest tests/        # 166 tests
 ```
 
 </details>

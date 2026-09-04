@@ -219,6 +219,48 @@ class TestTokopediaCacheParsing:
             ("Baut SSD M.2 SATA", "komputer-laptop/media-penyimpanan-data/ssd", "ssd"),
             ("Laptop Lenovo Legion RTX 5060", "komputer-laptop/komponen-komputer/vga-card", "gpu"),
             ("Case SSD M2 NVMe External USB", "komputer-laptop/media-penyimpanan-data/ssd", "ssd"),
+            # Real leaks from the 2026-09-04 snapshot: systems whose titles
+            # never say "laptop" / "PC"
+            (
+                "LENOVO LOQ 15IRX9 Core i7-13650HX RTX 4050 RAM 16GB",
+                "komputer-laptop/komponen-komputer/vga-card",
+                "gpu",
+            ),
+            (
+                "PC BUILD AMD RYZEN 7 9700X | 32GB DDR5 | SSD 2TB GEN4",
+                "komputer-laptop/komponen-komputer/vga-card",
+                "gpu",
+            ),
+            (
+                "AGRES PYRO PC RYZEN 7 9700X RTX 5070 12GB",
+                "komputer-laptop/komponen-komputer/vga-card",
+                "gpu",
+            ),
+            (
+                "HP AIO 24-CR0224D i5-1334U 8GB DDR4 512GB SSD PCIe NVMe W11",
+                "komputer-laptop/media-penyimpanan-data/ssd",
+                "ssd",
+            ),
+            (
+                "Axioo Hype 5 AMD X6 Ryzen 5 6600H Ram 16GB DDR5",
+                "komputer-laptop/komponen-komputer/ram-komputer",
+                "ram",
+            ),
+            (
+                "Netline PCI-E 3.0 X4 to M.2 NVMe + NGFF",
+                "komputer-laptop/media-penyimpanan-data/ssd",
+                "ssd",
+            ),
+            (
+                "UGREEN M.2 Sata NVMe to PCI-E 3.0 X4 Expansion Card B-key",
+                "komputer-laptop/media-penyimpanan-data/ssd",
+                "ssd",
+            ),
+            (
+                "Hardcase Storage Bag ORICO M2PH01 For M.2 SATA NVMe",
+                "komputer-laptop/media-penyimpanan-data/ssd",
+                "ssd",
+            ),
         ]
         for name, bc, cat in noise:
             entity = {"name": name, "_category": {"breadcrumb": bc}}
@@ -232,6 +274,43 @@ class TestTokopediaCacheParsing:
             "_category": {"breadcrumb": "komputer-laptop/komponen-komputer/ram-komputer"},
         }
         assert not scraper._is_relevant(entity, "ram")
+
+    def test_motherboard_signatures_filtered(self, scraper_config):
+        """Real leaks from the 2026-09-04 run: boards under RAM/SSD breadcrumbs."""
+        scraper = TokopediaScraper(scraper_config)
+        leaks = [
+            (
+                "VenomRX H110 LGA1151 NVMe Micro ATX Mainboard - DDR3 / DDR4",
+                "komputer-laptop/media-penyimpanan-data/ssd",
+                "ssd",
+            ),
+            (
+                "ASUS PRIME B760M-A WIFI DDR5 (Intel LGA 1700, Gen1)",
+                "komputer-laptop/komponen-komputer/ram-komputer",
+                "ram",
+            ),
+        ]
+        for name, bc, cat in leaks:
+            entity = {"name": name, "_category": {"breadcrumb": bc}}
+            assert not scraper._is_relevant(entity, cat), f"should exclude: {name}"
+
+    def test_genuine_modules_not_caught_by_board_signature(self, scraper_config):
+        scraper = TokopediaScraper(scraper_config)
+        keep = [
+            (
+                "Corsair Vengeance DDR5 32GB 6000MHz",
+                "komputer-laptop/komponen-komputer/ram-komputer",
+                "ram",
+            ),
+            (
+                "SSD Kingston NV2 1TB PCIe 4.0 NVMe",
+                "komputer-laptop/media-penyimpanan-data/ssd",
+                "ssd",
+            ),
+        ]
+        for name, bc, cat in keep:
+            entity = {"name": name, "_category": {"breadcrumb": bc}}
+            assert scraper._is_relevant(entity, cat), f"should keep: {name}"
 
     def test_build_search_url_uses_keyword_map(self, scraper_config):
         scraper = TokopediaScraper({**scraper_config, "search_keywords": {"gpu": "rtx"}})

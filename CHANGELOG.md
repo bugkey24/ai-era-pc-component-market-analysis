@@ -6,6 +6,48 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [1.3.1] - 2026-09-04
+
+### Fixed
+
+- **TOPSIS rank assignment (critical):** `rank()` assigned the
+  descending-score permutation itself as the Rank column instead of its
+  inverse, so Rank 1 could show a lower Score than Rank 2 whenever the best
+  alternative was not row 0 (the published docs table exhibited this).
+  All rankings regenerated; regression tests added
+  (`test_rank_ordering_is_monotonic_in_score`,
+  `test_best_alternative_not_in_first_row_still_wins`).
+- **Dataset pollution (55 listings removed):** the snapshot contained 24 PC
+  motherboards under the RAM/SSD breadcrumbs, 19 laptops/PC-builds under
+  GPU, 2 PCIe↔M.2 adapters, 1 storage bag and 9 other accessory rows.
+  `TokopediaScraper` exclusion patterns extended (mainboard/AIO/laptop-model/
+  adapter tokens) with regression tests; snapshot and raw files rebuilt to
+  **320 products (GPU 82, RAM 63, SSD 175)**.
+- **Sentiment distribution corrected:** the single non-positive review is
+  *neutral* (rating 3), not negative — genuine distribution is
+  63 positive / 1 neutral / 0 negative. Held-out accuracy stays `None`
+  (single-class corpus), reported honestly.
+- **Notebook §7 trained a hand-written "demo" corpus** (12 synthetic phrases
+  × 3, "accuracy 1.00") — replaced with the real 64-review corpus; violates
+  the no-synthetic-data directive no longer.
+- **Shopee robots.txt snapshot refreshed** (re-fetched 2026-09-04; the
+  Googlebot section expanded upstream, the `User-agent: *` rules we scrape
+  under are unchanged). Tokopedia and Blibli re-fetched byte-identical.
+- **Stale notebook outputs cleared** (240-row-era tables, demo-accuracy
+  printout).
+
+### Changed
+
+- Documentation fully re-aligned to the audited data: README, docs/01, 02,
+  04, 05, 08, 09, 10 and `compliance/` — collection table (375 raw → 320
+  filtered → 315 preprocessed), statistics (GPU median 9,918,000 / RAM
+  8,670,000 / SSD 3,388,000), ranking top-5, per-category best picks,
+  prediction (median Rp 5,399,999 → expected Rp 8,585,998, base 2027-2028),
+  AHP CR 0.0586, tests 166.
+- New collection audit: `docs/compliance/live-validation-2026-09-04.md`.
+
+---
+
 ## [1.3.0] - 2026-09-04
 
 ### Changed

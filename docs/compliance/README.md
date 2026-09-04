@@ -1,11 +1,14 @@
 # Scraping Compliance — robots.txt Analysis
 
-**Snapshot date:** 2026-09-03
+**Snapshot date:** 2026-09-04 (re-verified; Tokopedia & Blibli byte-identical
+to the 2026-09-03 snapshots, Shopee refreshed — its Googlebot section
+expanded, the `User-agent: *` rules we scrape under are unchanged)
 **Source files:** `tokopedia.robots.txt`, `shopee.robots.txt`, `blibli.robots.txt` (this directory)
 **Governing agent:** each platform's rules for `User-agent: *` (our scrapers identify with a custom UA, which falls under `*`)
 **Outcome:** Tokopedia collection live-validated — results in
 [`../09-live-experiment-results.md`](../09-live-experiment-results.md),
-formal scorecard in [`final-validation-v1-2-0.md`](./final-validation-v1-2-0.md).
+formal scorecards in [`live-validation-2026-09-04.md`](./live-validation-2026-09-04.md)
+and [`final-validation-v1-2-0.md`](./final-validation-v1-2-0.md).
 
 > Re-snapshot robots.txt before every live scraping run — platform rules change.
 > This analysis maps each rule to our configured scraping targets in `config.yaml`.

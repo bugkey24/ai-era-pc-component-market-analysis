@@ -62,6 +62,31 @@ class TestRanking:
         ranking = topsis.rank()
         assert list(ranking["Rank"]) == [1, 2, 3]
 
+    def test_rank_ordering_is_monotonic_in_score(self, topsis_known_case):
+        # Regression: Rank must follow Score ordering. The old implementation
+        # assigned the descending-order permutation itself as ranks, which
+        # scrambles Rank vs Score on non-trivial inputs.
+        topsis = TOPSISProcessor(
+            topsis_known_case["matrix"],
+            topsis_known_case["weights"],
+            topsis_known_case["criteria_types"],
+        )
+        ranking = topsis.rank()
+        assert ranking["Score"].is_monotonic_decreasing
+
+    def test_best_alternative_not_in_first_row_still_wins(self):
+        # Alternative 1 (expensive, high benefit) wins under benefit-heavy
+        # weights despite sitting mid-matrix — guards the inverse-permutation
+        # rank assignment
+        topsis = TOPSISProcessor(
+            [[2, 3], [10, 9], [6, 5]],
+            [0.3, 0.7],
+            ["cost", "benefit"],
+        )
+        ranking = topsis.rank()
+        assert ranking.iloc[0]["Alternative"] == 1
+        assert ranking.iloc[0]["Score"] == ranking["Score"].max()
+
     def test_perfect_alternative_wins(self):
         # Alt 0 is best on BOTH criteria (cheap cost, high benefit)
         topsis = TOPSISProcessor(

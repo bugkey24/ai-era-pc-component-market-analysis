@@ -13,8 +13,8 @@
 
 > **Compliance first:** robots.txt snapshots and the full per-platform
 > analysis live in [`docs/compliance/`](./compliance/README.md). Status after
-> live validation (2026-09-03): **Tokopedia = validated** (cache-based
-> parsing, 247 products + 42 reviews — see
+> live validation (2026-09-04): **Tokopedia = validated** (cache-based
+> parsing, 320 products + 64 reviews — see
 > [`09-live-experiment-results.md`](./09-live-experiment-results.md)) ·
 > **Shopee** = robots-legal but anti-bot risk, code-validated only ·
 > **Bibli** = products-only path (no search, no reviews), code-validated only.
@@ -32,7 +32,7 @@
 
 ---
 
-## 6.1 Tokopedia — ✅ live-validated (2026-09-03)
+## 6.1 Tokopedia — ✅ live-validated (2026-09-04)
 
 **Data source: the embedded Apollo cache, not DOM selectors.** Product
 cards render server-side but with obfuscated class names and no
@@ -53,10 +53,13 @@ Parse:   window.__cache → resolve id-references → product/review dicts
 > Bare category words ("gpu") return accessories and books; config
 > `search_keywords` maps categories to chip-level keywords
 > (`gpu→rtx`, `ram→ddr5`, `ssd→nvme`), and a breadcrumb filter plus
-> accessory/cross-category exclusion patterns (all live-verified — see
+> name-signature exclusion patterns for accessories, laptops, PC builds,
+> motherboards, and adapters (all live-verified — see
 > [`09-live-experiment-results.md`](./09-live-experiment-results.md)) remove the rest.
 
-Yield: 247 products across 3 pages × 3 categories; 42-review corpus.
+Yield: 320 products (from 375 raw listings; 55 misclassified/accessory
+listings filtered) across `max_pages=8` × 3 categories; 64-review corpus
+from 29 products.
 
 ---
 
@@ -126,7 +129,7 @@ Reviews: NOT SANCTIONED — no allowed review surface; scraper gated off
 Reviews feed the sentiment phase. **Only Tokopedia's robots.txt explicitly
 permits review crawling** (`Allow: /*/review`, plus a published
 `review-index.xml` sitemap) — see [`compliance/README.md`](./compliance/README.md).
-Live yield: 42 reviews from 11 of 12 sampled products
+Live yield: 64 reviews from 29 sampled products
 ([`09-live-experiment-results.md`](./09-live-experiment-results.md)).
 
 **Review schema** (`REVIEW_SCHEMA`, shared by all review scrapers):
