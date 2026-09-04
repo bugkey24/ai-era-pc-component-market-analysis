@@ -6,8 +6,6 @@ import logging
 from pathlib import Path
 
 import matplotlib
-
-matplotlib.use("Agg")  # non-interactive backend — safe for Colab / headless
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -33,6 +31,7 @@ class Visualizer:
         palette: str = _PALETTE,
         figsize: tuple[int, int] = _FIGSIZE,
         dpi: int = _DPI,
+        show: bool = False,
     ) -> None:
         self.df = df
         self.output_dir = Path(output_dir)
@@ -41,6 +40,7 @@ class Visualizer:
         self.palette = palette
         self.figsize = figsize
         self.dpi = dpi
+        self.show = show
 
         sns.set_theme(style=self.style)
         plt.rcParams.update({"figure.figsize": self.figsize, "figure.dpi": self.dpi})
@@ -65,34 +65,47 @@ class Visualizer:
     # 1. Price trends
     # ------------------------------------------------------------------
 
-    def plot_price_trends(self, save: bool = True) -> plt.Figure:
-        """Box-plot of price distribution per category."""
-        fig, ax = plt.subplots()
-        categories = self.df["category"].unique() if "category" in self.df.columns else []
-        if len(categories) == 0:
+    def plot_price_trends(self, save: bool = True, show: bool | None = None) -> plt.Figure:
+        """Subplots of price distribution per category (log scale for visibility)."""
+        categories = sorted(self.df["category"].unique()) if "category" in self.df.columns else []
+        if not categories:
             logger.warning("No 'category' column — skipping price_trends")
-            return fig
+            return plt.figure()
 
-        sns.boxplot(
-            data=self.df,
-            x="category",
-            y="price",
-            hue="category",
-            palette=self.palette,
-            legend=False,
-            ax=ax,
-        )
-        ax.set_title("Price Distribution by Component Category", fontsize=14)
-        ax.set_xlabel("Category")
-        ax.set_ylabel("Price (IDR)")
-        self._finish(fig, "price_trends", save)
+        n = len(categories)
+        fig, axes = plt.subplots(1, n, figsize=(5 * n, 5), sharey=False)
+        if n == 1:
+            axes = [axes]
+
+        cat_colors = dict(zip(categories, sns.color_palette(self.palette, n)))
+
+        for ax, cat in zip(axes, categories):
+            cat_data = self.df[self.df["category"] == cat]["price"].dropna()
+            if cat_data.empty:
+                ax.set_title(f"{cat.upper()} (no data)", fontsize=12)
+                continue
+
+            sns.boxplot(y=cat_data, color=cat_colors[cat], ax=ax, width=0.5)
+            sns.stripplot(y=cat_data, color="black", alpha=0.3, size=3, ax=ax)
+
+            ax.set_title(cat.upper(), fontsize=13, fontweight="bold")
+            ax.set_ylabel("Price (IDR)")
+            ax.set_yscale("log")
+            ax.yaxis.set_major_formatter(
+                matplotlib.ticker.FuncFormatter(lambda x, _: f"Rp{x:,.0f}")
+            )
+
+        fig.suptitle("Price Distribution by Component Category", fontsize=15, y=1.02)
+        self._finish(fig, "price_trends", save, show)
         return fig
 
     # ------------------------------------------------------------------
     # 2. Sentiment distribution
     # ------------------------------------------------------------------
 
-    def plot_sentiment_distribution(self, save: bool = True) -> plt.Figure:
+    def plot_sentiment_distribution(
+        self, save: bool = True, show: bool | None = None
+    ) -> plt.Figure:
         """Pie chart of overall sentiment breakdown."""
         fig, ax = plt.subplots()
         if "sentiment" not in self.df.columns:
@@ -103,7 +116,7 @@ class Visualizer:
         colors = sns.color_palette(self.palette, len(counts))
         ax.pie(counts, labels=counts.index, autopct="%1.1f%%", colors=colors, startangle=90)
         ax.set_title("Sentiment Distribution", fontsize=14)
-        self._finish(fig, "sentiment_distribution", save)
+        self._finish(fig, "sentiment_distribution", save, show)
         return fig
 
     # ------------------------------------------------------------------
@@ -111,7 +124,7 @@ class Visualizer:
     # ------------------------------------------------------------------
 
     def plot_correlation_heatmap(
-        self, columns: list[str] | None = None, save: bool = True
+        self, columns: list[str] | None = None, save: bool = True, show: bool | None = None
     ) -> plt.Figure:
         """Heatmap of numeric column correlations."""
         fig, ax = plt.subplots(figsize=(10, 8))
@@ -122,30 +135,54 @@ class Visualizer:
             corr, mask=mask, annot=True, fmt=".2f", cmap=self.palette, linewidths=0.5, ax=ax
         )
         ax.set_title("Feature Correlation Matrix", fontsize=14)
-        self._finish(fig, "correlation_heatmap", save)
+        self._finish(fig, "correlation_heatmap", save, show)
         return fig
 
     # ------------------------------------------------------------------
     # 4. TOPSIS ranking bar chart
     # ------------------------------------------------------------------
 
-    def plot_ranking_bar_chart(self, ranking_df: pd.DataFrame, save: bool = True) -> plt.Figure:
-        """Horizontal bar chart of TOPSIS scores."""
-        fig, ax = plt.subplots()
-        top = ranking_df.head(10)
-        sns.barplot(
-            data=top,
-            x="Score",
-            y="Alternative",
-            hue="Alternative",
-            palette="viridis",
-            legend=False,
-            ax=ax,
+    def plot_ranking_bar_chart(
+        self,
+        ranking_df: pd.DataFrame,
+        save: bool = True,
+        show: bool | None = None,
+        top_n: int = 10,
+        name_col: str = "name",
+    ) -> plt.Figure:
+        """Horizontal bar chart of TOPSIS scores — top N products by name."""
+        fig, ax = plt.subplots(figsize=(12, 7))
+        top = ranking_df.head(top_n).copy()
+
+        if name_col in top.columns:
+            top["label"] = top[name_col].apply(
+                lambda s: (s[:55] + "...") if isinstance(s, str) and len(s) > 55 else str(s)
+            )
+        else:
+            top["label"] = [f"#{i}" for i in range(1, len(top) + 1)]
+
+        palette = sns.color_palette(self.palette, len(top))
+        bars = ax.barh(
+            top["label"][::-1],
+            top["Score"][::-1],
+            color=palette[::-1],
+            edgecolor="white",
         )
-        ax.set_title("TOPSIS Ranking — Top Alternatives", fontsize=14)
+
+        for bar, score in zip(bars, top["Score"][::-1]):
+            ax.text(
+                bar.get_width() + 0.005,
+                bar.get_y() + bar.get_height() / 2,
+                f"{score:.4f}",
+                va="center",
+                fontsize=9,
+            )
+
+        ax.set_title(f"TOPSIS Ranking — Top {top_n} Products", fontsize=14)
         ax.set_xlabel("Relative Closeness Score")
-        ax.set_ylabel("Alternative Index")
-        self._finish(fig, "ranking_results", save)
+        ax.set_ylabel("")
+        ax.set_xlim(0, top["Score"].max() * 1.12)
+        self._finish(fig, "ranking_results", save, show)
         return fig
 
     # ------------------------------------------------------------------
@@ -153,7 +190,11 @@ class Visualizer:
     # ------------------------------------------------------------------
 
     def plot_wordcloud(
-        self, text_series: pd.Series, title: str = "Word Cloud", save: bool = True
+        self,
+        text_series: pd.Series,
+        title: str = "Word Cloud",
+        save: bool = True,
+        show: bool | None = None,
     ) -> plt.Figure:
         """Generate a word cloud from a text series."""
         try:
@@ -170,7 +211,7 @@ class Visualizer:
         ax.imshow(wc, interpolation="bilinear")
         ax.axis("off")
         ax.set_title(title, fontsize=14)
-        self._finish(fig, "wordcloud", save)
+        self._finish(fig, "wordcloud", save, show)
         return fig
 
     # ------------------------------------------------------------------
@@ -183,6 +224,7 @@ class Visualizer:
         values: list[float],
         title: str = "Criteria Profile",
         save: bool = True,
+        show: bool | None = None,
     ) -> plt.Figure:
         """Radar/spider chart for a single alternative's criteria profile."""
         angles = np.linspace(0, 2 * np.pi, len(labels), endpoint=False).tolist()
@@ -197,25 +239,34 @@ class Visualizer:
         ax.set_xticks(angles)
         ax.set_xticklabels(labels, fontsize=10)
         ax.set_title(title, fontsize=14, pad=20)
-        self._finish(fig, "radar_chart", save)
+        self._finish(fig, "radar_chart", save, show)
         return fig
 
     # ------------------------------------------------------------------
     # Utility
     # ------------------------------------------------------------------
 
-    def _finish(self, fig: plt.Figure, name: str, save: bool) -> None:
+    def _finish(
+        self,
+        fig: plt.Figure,
+        name: str,
+        save: bool,
+        show: bool | None = None,
+    ) -> None:
         fig.tight_layout()
+        effective_show = show if show is not None else self.show
         if save:
             path = self.output_dir / f"{name}.png"
             fig.savefig(path, dpi=self.dpi, bbox_inches="tight")
             logger.info("Saved %s", path)
+        if effective_show:
+            plt.show()
         plt.close(fig)
 
-    def create_all_plots(self) -> None:
+    def create_all_plots(self, show: bool | None = None) -> None:
         """Run the standard set of project visualisations."""
         logger.info("Generating all standard plots")
-        self.plot_price_trends()
-        self.plot_sentiment_distribution()
-        self.plot_correlation_heatmap()
+        self.plot_price_trends(show=show)
+        self.plot_sentiment_distribution(show=show)
+        self.plot_correlation_heatmap(show=show)
         logger.info("All plots generated")

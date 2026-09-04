@@ -8,7 +8,7 @@ scraping:
     - gpu
     - ram
     - ssd
-  max_pages: 5
+  max_pages: 8
   delay: 2.0
   retry_count: 3
   timeout: 10
@@ -23,6 +23,7 @@ scraping:
       method: static
       base_url: "https://www.tokopedia.com"   # search uses /find/{cat}?page=N (robots-allowed)
       reviews_enabled: true                    # robots explicitly allows /*/review
+      review_max_pages: 4                      # pages of reviews per product
       # Bare category words ("gpu") return accessories/books — search
       # chip-level keywords instead; breadcrumb filter removes the rest
       search_keywords:
@@ -39,6 +40,14 @@ scraping:
       method: static
       base_url: "https://www.blibli.com"       # discovery via /c/ category pages, NOT /search (robots-disallowed)
       reviews_enabled: false                   # robots disallows /p/*/pr* — reviews are blocked
+
+# Data quality thresholds — pipeline logs warnings when not met
+data_requirements:
+  min_products_per_category: 50
+  min_total_products: 150
+  min_reviews: 50
+  min_reviews_with_negative: 10    # at least N negative/neutral reviews for sentiment training
+  min_sentiment_accuracy: 0.75     # target: >75% held-out accuracy
 
 preprocessing:
   handle_missing: "drop"

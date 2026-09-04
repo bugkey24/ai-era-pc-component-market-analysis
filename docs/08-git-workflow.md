@@ -17,20 +17,41 @@ This project uses a lightweight **Git Flow** variant suited for a small team bui
 
 **Repository:** [github.com/bugkey24/ai-era-pc-component-market-analysis](https://github.com/bugkey24/ai-era-pc-component-market-analysis)
 
-```
-main (production-ready, tagged releases)
- │
- ├── develop (integration branch — all features merge here)
- │    │
- │    ├── feature/scraper-tokopedia
- │    ├── feature/scraper-shopee
- │    ├── feature/preprocessing-pipeline
- │    ├── feature/sentiment-analyzer
- │    ├── feature/ahp-topsis-dss
- │    ├── feature/visualizations
- │    └── docs/branching-strategy
- │
- └── release/v1.0.0 (optional — only if staging before final)
+```mermaid
+flowchart TD
+    subgraph main["main (production-ready, tagged releases)"]
+        M0["v1.2.3"]
+    end
+
+    subgraph develop["develop (integration branch)"]
+        D1["merge-tokopedia"]
+        D2["merge-shopee"]
+        D3["merge-preprocessing"]
+        D4["merge-sentiment"]
+        D5["merge-dss"]
+        D6["merge-viz"]
+        D1 --> D2 --> D3 --> D4 --> D5 --> D6
+    end
+
+    M0 -->|init| D1
+
+    subgraph features["Feature branches (squash merge → develop)"]
+        direction LR
+        F1["feature/scraper-tokopedia"]
+        F2["feature/scraper-shopee"]
+        F3["feature/preprocessing"]
+        F4["feature/sentiment-analyzer"]
+        F5["feature/ahp-topsis-dss"]
+        F6["feature/visualizations"]
+    end
+
+    features -->|squash| develop
+    develop -->|merge commit| main
+    main -->|ff/sync| develop
+
+    style main fill:#e1f5fe
+    style develop fill:#fff3e0
+    style features fill:#f3e5f5
 ```
 
 ---

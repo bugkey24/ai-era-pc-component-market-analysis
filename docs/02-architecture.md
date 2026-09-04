@@ -14,101 +14,75 @@
 
 ## 1. High-Level Architecture Diagram
 
-```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                         ORCHESTRATOR (Main Pipeline)                       │
-│                      `main_pipeline.py` / Colab Notebook                   │
-└─────────────────────────────────────────────────────────────────────────────┘
-                                       │
-         ┌─────────────────────────────┼─────────────────────────────┐
-         │                             │                             │
-         ▼                             ▼                             ▼
-┌─────────────────┐     ┌─────────────────────────┐     ┌───────────────────┐
-│   CONFIG        │     │    DATA MANAGER          │     │   LOGGING         │
-│  (config.yaml)  │◄────│  (DataLoader/Saver)      │     │   (logger.py)     │
-└─────────────────┘     └─────────────────────────┘     └───────────────────┘
-         │                             │                             │
-         └─────────────────────────────┼─────────────────────────────┘
-                                       │
-         ┌─────────────────────────────┼─────────────────────────────┐
-         │                             │                             │
-         ▼                             ▼                             ▼
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                           LAYER 1: SCRAPING MODULE                         │
-│                         (Polymorphism + Factory Pattern)                   │
-├─────────────────────────────────────────────────────────────────────────────┤
-│                                                                             │
-│  ┌─────────────────────────────────────────────────────────────────────┐  │
-│  │                     abstract class BaseScraper                      │  │
-│  │  + fetch_page()  + parse_product()  + get_next_page()  + save()   │  │
-│  └─────────────────────────────────────────────────────────────────────┘  │
-│                                    ▲                                       │
-│                                    │                                       │
-│   ┌────────────────┬───────────────┴───────────────┬─────────────────┐  │
-│   │                │                               │                 │  │
-│   ▼                ▼                               ▼                 ▼  │
-│ TokopediaScraper  ShopeeScraper (Selenium)   BlibliScraper       Future   │
-│  (static HTML)    (dynamic JS)              (static HTML)      Platform  │
-└─────────────────────────────────────────────────────────────────────────────┘
-                                       │
-                                       ▼
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                         LAYER 2: PREPROCESSING MODULE                      │
-├─────────────────────────────────────────────────────────────────────────────┤
-│                                                                             │
-│  ┌─────────────────────────────────────────────────────────────────────┐  │
-│  │                      DataPreprocessor (Class)                       │  │
-│  │  + clean_text()  + normalize_price()  + handle_missing()  +        │  │
-│  │    extract_specs()  + remove_outliers()  + transform_features()    │  │
-│  └─────────────────────────────────────────────────────────────────────┘  │
-│                                                                             │
-│  ┌─────────────────────────────────────────────────────────────────────┐  │
-│  │                     FeatureEngineer (Class)                        │  │
-│  │  + create_price_per_gb()  + create_weighted_rating()  +           │  │
-│  │    create_seller_trust_score()                                   │  │
-│  └─────────────────────────────────────────────────────────────────────┘  │
-└─────────────────────────────────────────────────────────────────────────────┘
-                                       │
-                                       ▼
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                       LAYER 3: ANALYSIS MODULE                             │
-├─────────────────────────────────────────────────────────────────────────────┤
-│                                                                             │
-│  ┌─────────────────────────────┐  ┌─────────────────────────────────────┐ │
-│  │   StatisticalAnalyzer       │  │   SentimentAnalyzer (NLP)           │ │
-│  │  + describe()              │  │  + preprocess_text()               │ │
-│  │  + correlation_matrix()    │  │  + vectorize() (TF-IDF)            │ │
-│  │  + trend_analysis()        │  │  + train_model() (SVM/LogReg)      │ │
-│  │  + normality_test()        │  │  + predict_aspect()               │ │
-│  └─────────────────────────────┘  └─────────────────────────────────────┘ │
-└─────────────────────────────────────────────────────────────────────────────┘
-                                       │
-                                       ▼
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                         LAYER 4: DSS MODULE                                │
-├─────────────────────────────────────────────────────────────────────────────┤
-│                                                                             │
-│  ┌─────────────────────────────┐  ┌─────────────────────────────────────┐ │
-│  │       AHPProcessor          │  │       TOPSISProcessor              │ │
-│  │  + build_pairwise_matrix()  │  │  + normalize_matrix()             │ │
-│  │  + calculate_weights()      │  │  + find_ideal_solutions()         │ │
-│  │  + check_consistency()      │  │  + calculate_separation()         │ │
-│  │  + get_weighted_criteria()  │  │  + rank_alternatives()            │ │
-│  └─────────────────────────────┘  └─────────────────────────────────────┘ │
-└─────────────────────────────────────────────────────────────────────────────┘
-                                       │
-                                       ▼
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                         LAYER 5: VISUALIZATION MODULE                      │
-├─────────────────────────────────────────────────────────────────────────────┤
-│                                                                             │
-│  ┌─────────────────────────────────────────────────────────────────────┐  │
-│  │                        Visualizer (Class)                           │  │
-│  │  + plot_price_trends()  + plot_sentiment_distribution()  +         │  │
-│  │    plot_ranking_bar_chart()  + plot_correlation_heatmap()  +       │  │
-│  │    plot_wordcloud()  + plot_radar_chart()                         │  │
-│  └─────────────────────────────────────────────────────────────────────┘  │
-└─────────────────────────────────────────────────────────────────────────────┘
+```mermaid
+graph TB
+    subgraph Orchestrator["ORCHESTRATOR — main_pipeline.py / Colab Notebook"]
+        direction TB
+    end
+
+    Config["CONFIG<br/>config.yaml"]
+    DataManager["DATA MANAGER<br/>DataLoader/Saver"]
+    Logging["LOGGING<br/>logger.py"]
+
+    Orchestrator --> Config
+    Orchestrator --> DataManager
+    Orchestrator --> Logging
+
+    subgraph Layer1["LAYER 1: SCRAPING MODULE (Polymorphism + Factory Pattern)"]
+        direction TB
+        BaseScraper["BaseScraper<br/>ABC"]
+        Tokopedia["TokopediaScraper<br/>(Apollo cache)"]
+        Shopee["ShopeeScraper<br/>(Selenium)"]
+        Blibli["BlibliScraper<br/>(static HTML)"]
+        BaseReviewScraper["BaseReviewScraper<br/>ABC"]
+        TokopediaReview["TokopediaReviewScraper"]
+        ShopeeReview["ShopeeReviewScraper"]
+        BlibliReview["BlibliReviewScraper"]
+        RobotsGuard["RobotsGuard<br/>(RFC 9309)"]
+
+        BaseScraper --> Tokopedia
+        BaseScraper --> Shopee
+        BaseScraper --> Blibli
+        BaseReviewScraper --> TokopediaReview
+        BaseReviewScraper --> ShopeeReview
+        BaseReviewScraper --> BlibliReview
+    end
+
+    subgraph Layer2["LAYER 2: PREPROCESSING MODULE"]
+        direction TB
+        DataPreprocessor["DataPreprocessor<br/>+ clean_prices<br/>+ handle_missing<br/>+ extract_specifications<br/>+ nullify_unrated_ratings<br/>+ remove_outliers"]
+        FeatureEngineer["FeatureEngineer<br/>+ create_price_per_gb<br/>+ create_weighted_rating<br/>+ create_seller_trust_score<br/>+ create_discount_depth"]
+    end
+
+    subgraph Layer3["LAYER 3: ANALYSIS MODULE"]
+        direction TB
+        StatisticalAnalyzer["StatisticalAnalyzer<br/>+ describe<br/>+ correlation_matrix<br/>+ price_trend_by_category<br/>+ normality_test"]
+        SentimentAnalyzer["SentimentAnalyzer (NLP)<br/>+ preprocess_text<br/>+ vectorize (TF-IDF)<br/>+ train (LinearSVC)<br/>+ predict"]
+        NormalizationPredictor["NormalizationPredictor<br/>+ bull/base/bear scenarios<br/>+ probability-weighted"]
+    end
+
+    subgraph Layer4["LAYER 4: DSS MODULE"]
+        direction TB
+        AHPProcessor["AHPProcessor<br/>+ build_pairwise_matrix<br/>+ calculate_weights<br/>+ check_consistency"]
+        TOPSISProcessor["TOPSISProcessor<br/>+ normalize_matrix<br/>+ find_ideal_solutions<br/>+ calculate_separation<br/>+ rank"]
+    end
+
+    subgraph Layer5["LAYER 5: VISUALIZATION MODULE"]
+        Visualizer["Visualizer<br/>+ plot_price_trends (subplots)<br/>+ plot_sentiment_distribution<br/>+ plot_correlation_heatmap<br/>+ plot_ranking_bar_chart (top N)<br/>+ plot_wordcloud<br/>+ plot_radar_chart"]
+    end
+
+    Orchestrator --> Layer1
+    Layer1 --> Layer2
+    Layer2 --> Layer3
+    Layer3 --> Layer4
+    Layer4 --> Layer5
+
+    style Orchestrator fill:#e1f5fe
+    style Layer1 fill:#fff3e0
+    style Layer2 fill:#e8f5e9
+    style Layer3 fill:#fce4ec
+    style Layer4 fill:#f3e5f5
+    style Layer5 fill:#e0f7fa
 ```
 
 ### Diagram notes (additions since v1.0)
@@ -131,30 +105,40 @@
 
 ## 2. Data Pipeline Architecture
 
-```
-┌─────────────────────────────────────────────────────────────────────────┐
-│                    DATA PIPELINE ARCHITECTURE                          │
-├─────────────────────────────────────────────────────────────────────────┤
-│                                                                         │
-│  ┌──────────────┐     ┌──────────────┐     ┌──────────────────────┐  │
-│  │  LAYER 1     │     │  LAYER 2     │     │  LAYER 3              │  │
-│  │  DATA        │────▶│  DATA        │────▶│  ANALYSIS             │  │
-│  │  ACQUISITION │     │  PROCESSING  │     │  & MODELLING          │  │
-│  └──────────────┘     └──────────────┘     └──────────────────────┘  │
-│         │                     │                        │               │
-│  Tokopedia            Pandas DataFrame        Statistical Analysis    │
-│  Shopee               Data Cleaning           Sentiment Analysis      │
-│  Blibli               Normalization           AHP-TOPSIS             │
-│                                                          │             │
-│                                                    ┌─────▼─────┐     │
-│                                                    │ LAYER 4   │     │
-│                                                    │ OUTPUT    │     │
-│                                                    │ RENDER    │     │
-│                                                    └───────────┘     │
-│                                                    Visualizations    │
-│                                                    Recommendations   │
-│                                                    Prediction         │
-└─────────────────────────────────────────────────────────────────────────┘
+```mermaid
+graph LR
+    subgraph L1["LAYER 1: DATA ACQUISITION"]
+        Tokopedia["Tokopedia"]
+        Shopee["Shopee"]
+        Blibli["Blibli"]
+    end
+
+    subgraph L2["LAYER 2: DATA PROCESSING"]
+        Pandas["Pandas DataFrame"]
+        Cleaning["Data Cleaning"]
+        Norm["Normalization"]
+    end
+
+    subgraph L3["LAYER 3: ANALYSIS & MODELLING"]
+        Stats["Statistical Analysis"]
+        Sentiment["Sentiment Analysis"]
+        DSS["AHP-TOPSIS"]
+    end
+
+    subgraph L4["LAYER 4: OUTPUT"]
+        Viz["Visualizations"]
+        Rec["Recommendations"]
+        Pred["Prediction"]
+    end
+
+    L1 --> L2
+    L2 --> L3
+    L3 --> L4
+
+    style L1 fill:#fff3e0
+    style L2 fill:#e8f5e9
+    style L3 fill:#fce4ec
+    style L4 fill:#e0f7fa
 ```
 
 ---

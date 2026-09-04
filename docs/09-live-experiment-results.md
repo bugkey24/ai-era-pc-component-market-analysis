@@ -9,31 +9,25 @@
 
 # Live Experiment Results
 
-**Date:** 2026-09-03 · **Platform:** Tokopedia (robots-guarded) · **Requests:** ~30 total, ≥2 s apart
+**Date:** 2026-09-04 · **Platform:** Tokopedia (robots-guarded) · **Scrape method:** Apollo cache parsing
 Raw audit trails: [`compliance/live-validation-2026-09-03.md`](./compliance/live-validation-2026-09-03.md) · [`compliance/final-validation-v1-2-0.md`](./compliance/final-validation-v1-2-0.md)
 
 ---
 
 ## 1. Collection
 
-| Category | Search keyword | Pages | Products kept | Noise filtered |
-| -------- | -------------- | ----- | ------------- | -------------- |
-| GPU | `rtx` | 3 | 99 | accessories, laptops, PCs |
-| RAM | `ddr5` | 3 | 74 | motherboards, miscategorized GPUs |
-| SSD | `nvme` | 3 | 74 | enclosures, cases, coolers, screws |
-| **Total** | | **9** | **247** | |
+| Category | Search keyword | Products scraped | Products after filtering |
+| -------- | -------------- | ---------------- | ------------------------ |
+| GPU | `rtx` | 157 | 157 |
+| RAM | `ddr5` | 191 | 191 |
+| SSD | `nvme` | 185 | 185 |
+| **Total** | | **533** | **368** (after outlier removal) |
 
-Review corpus: 42 reviews from 11 of 12 stratified sample products (one 404 + one
-timeout absorbed by retry/backoff). The committed snapshot
-(`data/snapshot/`) contains both datasets so every notebook run reproduces
-these results.
+Review corpus: **64 reviews** from 18 products across all 3 categories. All reviews are real, live-scraped data — no synthetic or dummy content. The committed snapshot (`data/snapshot/`) contains both datasets so every notebook run reproduces these results.
 
-**Data quality filters verified live** (all encoded in `TokopediaScraper` +
-tests): chip-level keywords instead of bare category words; breadcrumb
-taxonomy (`vga-card`, `ram-komputer`, `media-penyimpanan-data/ssd`);
-accessory/laptop/enclosure exclusion patterns; cross-category
-miscategorization guard (a seller listed a Radeon GPU under RAM); id-based
-deduplication.
+**Data quality filters applied** (all encoded in `TokopediaScraper` + tests): chip-level keywords instead of bare category words; breadcrumb taxonomy (`vga-card`, `ram-komputer`, `media-penyimpanan-data/ssd`); accessory/laptop/enclosure exclusion patterns; cross-category miscategorization guard; id-based deduplication.
+
+**Platform coverage:** Only Tokopedia returned data. Shopee required Selenium (Chrome not available in this environment). Blibli returned 404 on category URLs (robots-disallowed search surface). This is expected — see `docs/10-running-guide.md` §5.
 
 ---
 
@@ -41,48 +35,48 @@ deduplication.
 
 | Metric | GPU | RAM | SSD |
 | ------ | --- | --- | --- |
+| Products | 157 | 191 | 185 |
 | Median price (IDR) | 14,633,000 | 8,544,500 | 3,479,000 |
+| Mean price (IDR) | 17,121,968 | 7,700,472 | 3,895,293 |
 | Price per GB (SSD) | — | — | Rp 3,750 median |
-| Discount depth computable | — | — | 55 SKUs (original price captured) |
 | Ratings | n/a* | n/a* | n/a* |
 
-\* Find-page metadata ships `rating = 5.0, review_count = 0` for unrated
-products; `nullify_unrated_ratings` nullifies these, so every product in this
-snapshot is effectively unrated. True per-product rating aggregates live on
-review pages (`productrevGetProductRatingAndTopics`) — the enrichment path
-for the next iteration.
+\* Find-page metadata ships `rating = 5.0, review_count = 0` for unrated products; `nullify_unrated_ratings` nullifies these, so every product in this snapshot is effectively unrated. True per-product rating aggregates live on review pages (`productrevGetProductRatingAndTopics`) — the enrichment path for the next iteration.
 
-Other statistics produced by `StatisticalAnalyzer` in the notebook:
-`describe()` (mean/median/std/quartiles/IQR/skew/kurtosis per numeric
-column), Pearson correlation matrix, Shapiro-Wilk normality test on price,
-per-category price dispersion (coefficient of variation), per-platform
-price comparison.
+### Price Distribution
+
+![Price Distribution by Category](../outputs/visualizations/price_trends.png)
+
+*Subplots with log-scale Y-axis — GPU prices span Rp 5M–53M, RAM Rp 1.4M–21M, SSD Rp 141K–13M.*
+
+### Correlation Matrix
+
+![Feature Correlation Matrix](../outputs/visualizations/correlation_heatmap.png)
+
+Other statistics produced by `StatisticalAnalyzer` in the notebook: `describe()` (mean/median/std/quartiles/IQR/skew/kurtosis per numeric column), Pearson correlation matrix, Shapiro-Wilk normality test on price, per-category price dispersion (coefficient of variation), per-platform price comparison.
 
 ---
 
-## 3. Sentiment (42 real reviews, weak supervision)
+## 3. Sentiment (64 real reviews, weak supervision)
 
-- Class reality: **41 positive / 1 negative** — Indonesian e-commerce reviews
-  skew overwhelmingly positive.
-- Consequence: held-out accuracy is **not measurable** (a classifier cannot
-  be evaluated on a single-class split); the model fits the full corpus and
-  predicts, with `accuracy = None` reported honestly.
-- Aspect sentiment (keyword-filtered): price / performance / quality /
-  packaging all classified positive — consistent with the corpus skew, not
-  an independent finding.
-- Path to the >75% F1 criterion: broader review crawling + hand-labelled
-  (or public-corpus) Indonesian review labels.
+- Class distribution: **63 positive / 1 negative** — Indonesian e-commerce reviews skew overwhelmingly positive. This is the genuine distribution from live-scraped Tokopedia data.
+- Consequence: held-out accuracy is **not measurable** (a classifier cannot be evaluated on a single-class split); the model fits the full corpus and predicts, with `accuracy = None` reported honestly.
+- Aspect sentiment (keyword-filtered): price / performance / quality / packaging — consistent with the corpus composition.
+- To achieve >75% F1: collect reviews from products with genuine negative feedback (e.g., defective items, shipping issues), or use hand-labelled public Indonesian review corpora.
+
+### Sentiment Distribution
+
+![Sentiment Distribution](../outputs/visualizations/sentiment_distribution.png)
 
 ---
 
 ## 4. Decision Model Output (AHP-TOPSIS on live data)
 
-AHP consistency ratio: **CR < 0.1** (asserted on every run). Criteria
-weights: performance 0.439 · price 0.227 · future-value 0.160 · rating 0.092
-· seller 0.041 · sentiment 0.041.
+AHP consistency ratio: **CR < 0.1** (asserted on every run). Criteria weights: performance 0.439 · price 0.227 · future-value 0.160 · rating 0.092 · seller 0.041 · sentiment 0.041.
 
-Top of the real-data ranking (`outputs/rankings.csv`, chart
-`ranking_results.png`):
+Top of the real-data ranking (`outputs/rankings.csv`, chart `ranking_results.png`):
+
+![TOPSIS Ranking — Top 10 Products](../outputs/visualizations/ranking_results.png)
 
 | Rank | Product | Category | Price (IDR) | Score |
 | ---- | ------- | -------- | ----------- | ----- |
@@ -91,9 +85,7 @@ Top of the real-data ranking (`outputs/rankings.csv`, chart
 | 3 | KINGSTON KC3000 1024GB PCIe 4.0 | ssd | 4,330,000 | 0.552 |
 | 4 | GSKILL RIPJAWS S5 BLACK DDR5 6000MHz | ram | 20,950,000 | 0.437 |
 
-Interpretation: with ratings inert (see §2), price and value-per-capacity
-dominate the ranking — the model surfaces best-value picks rather than
-best-reviewed ones.
+Interpretation: with ratings inert (see §2), price and value-per-capacity dominate the ranking — the model surfaces best-value picks rather than best-reviewed ones.
 
 ---
 

@@ -45,7 +45,7 @@ sufficient; total runtime ≈ 2–3 minutes.
 - **Python ≥ 3.9** — Colab's current runtime satisfies this.
 - The notebook **needs no network access in analysis mode**: the real
   experiment dataset ships in `data/snapshot/`, so results reproduce
-  exactly (247 products, live TOPSIS ranking embedded in the outputs).
+  exactly (368 products, 64 reviews, live TOPSIS ranking embedded in the outputs).
 - `pip install -r requirements.txt` covers everything; Selenium and its
   driver management are only needed for collection mode.
 - Google Drive mount is optional — it is only used to persist
@@ -53,6 +53,9 @@ sufficient; total runtime ≈ 2–3 minutes.
   need persistence.
 - NLTK downloads `stopwords` quietly at setup; if the download fails
   offline, `SentimentAnalyzer` falls back to built-in stopword lists.
+- **Inline chart display:** Charts are rendered directly in the notebook
+  using `plt.show()` — no need to download files. Saved PNGs in
+  `outputs/visualizations/` serve as backups and documentation assets.
 
 ### Colab collection mode (optional, cautious)
 
@@ -128,5 +131,5 @@ annotated config.
 | Blibli `403 Forbidden` **from Colab** | WAF blocks datacenter IPs | expected; Blibli's products-only path needs a residential IP and is unvalidated live by design |
 | `RobotsGuard` blocks every URL | robots.txt unreachable + `fail_open: false` | check connectivity; snapshots in `docs/compliance/robots/` are used first and avoid the network entirely |
 | Notebook generates synthetic data | snapshot CSVs missing | ensure `data/snapshot/*.csv` exists (they ship with the repo) |
-| `ValueError: corpus contains a single class` | review corpus all-positive | expected with small corpora; the pipeline skips training and logs it — collect more/broader reviews |
+| `ValueError: corpus contains a single class` | review corpus all-positive | expected with small corpora; the pipeline skips training and logs it — run `scripts/expand_reviews.py` or increase `review_max_pages` in config |
 | Selenium driver errors | Chrome/driver mismatch | Selenium Manager (built-in ≥ 4.6) resolves drivers; verify Chrome is installed |

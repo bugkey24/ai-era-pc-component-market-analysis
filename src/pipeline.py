@@ -63,6 +63,9 @@ class PipelineOrchestrator:
         logger.info("Phase 2: Preprocessing")
         self.data = self._run_preprocessing()
 
+        # Check data requirements
+        self._check_data_requirements()
+
         # Phase 3 — Statistical analysis
         logger.info("Phase 3: Statistical analysis")
         self.stats = self._run_statistics()
@@ -89,6 +92,53 @@ class PipelineOrchestrator:
     # ------------------------------------------------------------------
     # Individual phases
     # ------------------------------------------------------------------
+
+    def _check_data_requirements(self) -> None:
+        """Validate collected data against minimum quality thresholds."""
+        req = self.config.get("data_requirements", {})
+        if not req or self.data is None:
+            return
+
+        n_products = len(self.data)
+        min_total = req.get("min_total_products", 150)
+        if n_products < min_total:
+            logger.warning(
+                "Data below threshold: %d products (minimum %d). "
+                "Increase max_pages or enable additional platforms.",
+                n_products,
+                min_total,
+            )
+
+        if "category" in self.data.columns:
+            cat_counts = self.data["category"].value_counts()
+            min_per_cat = req.get("min_products_per_category", 50)
+            for cat, count in cat_counts.items():
+                if count < min_per_cat:
+                    logger.warning(
+                        "Category '%s' has %d products (minimum %d)", cat, count, min_per_cat
+                    )
+
+        # Check review data
+        review_files = sorted(Path("data/raw").glob("reviews_*.csv")) + sorted(
+            Path("data/snapshot").glob("reviews_*.csv")
+        )
+        total_reviews = 0
+        if review_files:
+            for f in review_files:
+                try:
+                    rdf = pd.read_csv(f)
+                    total_reviews += len(rdf)
+                except Exception:
+                    pass
+
+        min_reviews = req.get("min_reviews", 50)
+        if total_reviews < min_reviews:
+            logger.warning(
+                "Review corpus below threshold: %d reviews (minimum %d). "
+                "Run expand_reviews.py or increase review_max_pages.",
+                total_reviews,
+                min_reviews,
+            )
 
     def _run_scraping(self) -> pd.DataFrame:
         scrap_cfg = self.config["scraping"]
@@ -220,7 +270,18 @@ class PipelineOrchestrator:
             return pd.DataFrame()
 
         topsis = TOPSISProcessor(matrix, weights, dss_cfg["criteria_types"])
-        return topsis.rank()
+        ranking = topsis.rank()
+
+        # Enrich ranking with product metadata for readable output
+        if self.data is not None and not ranking.empty and "name" in self.data.columns:
+            idx = ranking["Alternative"].astype(int).values
+            ranking["name"] = self.data.iloc[idx]["name"].values
+            if "category" in self.data.columns:
+                ranking["category"] = self.data.iloc[idx]["category"].values
+            if "price" in self.data.columns:
+                ranking["price"] = self.data.iloc[idx]["price"].values
+
+        return ranking
 
     def _prepare_decision_matrix(self, criteria: list[str]) -> pd.DataFrame:
         """Map config criteria to available data columns.
@@ -284,7 +345,7 @@ class PipelineOrchestrator:
         )
         viz.create_all_plots()
         if self.ranking is not None and not self.ranking.empty:
-            viz.plot_ranking_bar_chart(self.ranking)
+            viz.plot_ranking_bar_chart(self.ranking, name_col="name")
 
     # ------------------------------------------------------------------
     # Convenience
