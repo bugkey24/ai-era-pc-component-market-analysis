@@ -6,6 +6,42 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [1.3.0] - 2026-09-04
+
+### Changed
+
+- **Live-scraped snapshot refresh:** 375 products (GPU 101, RAM 91, SSD 183)
+  and 64 real reviews from 29 products — zero synthetic data.
+- **Visualizer:** price trends now 1×N subplots with log-scale Y (RAM/SSD
+  visible next to GPU); ranking chart shows product names (top 10) with
+  score labels; `show` toggle renders figures inline before closing them.
+- **Pipeline:** ranking enriched with product name/category/price; new
+  data-requirements check against `config.yaml` thresholds.
+- **Config:** `scraping.max_pages` 5→8, new `review_max_pages: 4`, new
+  `data_requirements` section.
+- **Notebook:** charts render inline in Colab (removed forced Agg backend,
+  fixed figure-close-before-show); export cell previews the cleaned dataset
+  and lists output files with sizes; conclusions updated to live-scraped
+  stats (GPU median 12.09M, RAM 8.29M, SSD 3.38M).
+
+### Fixed
+
+- Colab ran stale code: the notebook cloned the repo's default branch
+  (`main`) while all fixes lived on `develop`, so every run executed the
+  old seaborn-based `plot_ranking_bar_chart` and failed with
+  ``Could not interpret value `Alternative` for `y``` once `df_ranked`
+  (which has no `Alternative` column) was passed in. Resolved by merging
+  `develop` → `main`.
+
+### Docs
+
+- Mermaid flowcharts replace ASCII diagrams (`docs/02`, `docs/08`); charts
+  embedded in `docs/09`; honest sentiment assessment (63 positive / 1
+  negative → accuracy not measurable on a single-class test set);
+  `scripts/expand_reviews.py` added for future review collection.
+
+---
+
 ## [1.2.3] - 2026-09-03
 
 ### Fixed

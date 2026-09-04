@@ -31,6 +31,7 @@ class Visualizer:
         palette: str = _PALETTE,
         figsize: tuple[int, int] = _FIGSIZE,
         dpi: int = _DPI,
+        show: bool = False,
     ) -> None:
         self.df = df
         self.output_dir = Path(output_dir)
@@ -39,6 +40,7 @@ class Visualizer:
         self.palette = palette
         self.figsize = figsize
         self.dpi = dpi
+        self.show = show
 
         sns.set_theme(style=self.style)
         plt.rcParams.update({"figure.figsize": self.figsize, "figure.dpi": self.dpi})
@@ -58,7 +60,7 @@ class Visualizer:
     # 1. Price trends
     # ------------------------------------------------------------------
 
-    def plot_price_trends(self, save: bool = True) -> plt.Figure:
+    def plot_price_trends(self, save: bool = True, show: bool | None = None) -> plt.Figure:
         """Subplots of price distribution per category (log scale for visibility)."""
         categories = sorted(self.df["category"].unique()) if "category" in self.df.columns else []
         if not categories:
@@ -89,14 +91,16 @@ class Visualizer:
             )
 
         fig.suptitle("Price Distribution by Component Category", fontsize=15, y=1.02)
-        self._finish(fig, "price_trends", save)
+        self._finish(fig, "price_trends", save, show)
         return fig
 
     # ------------------------------------------------------------------
     # 2. Sentiment distribution
     # ------------------------------------------------------------------
 
-    def plot_sentiment_distribution(self, save: bool = True) -> plt.Figure:
+    def plot_sentiment_distribution(
+        self, save: bool = True, show: bool | None = None
+    ) -> plt.Figure:
         """Pie chart of overall sentiment breakdown."""
         fig, ax = plt.subplots()
         if "sentiment" not in self.df.columns:
@@ -107,7 +111,7 @@ class Visualizer:
         colors = sns.color_palette(self.palette, len(counts))
         ax.pie(counts, labels=counts.index, autopct="%1.1f%%", colors=colors, startangle=90)
         ax.set_title("Sentiment Distribution", fontsize=14)
-        self._finish(fig, "sentiment_distribution", save)
+        self._finish(fig, "sentiment_distribution", save, show)
         return fig
 
     # ------------------------------------------------------------------
@@ -115,7 +119,7 @@ class Visualizer:
     # ------------------------------------------------------------------
 
     def plot_correlation_heatmap(
-        self, columns: list[str] | None = None, save: bool = True
+        self, columns: list[str] | None = None, save: bool = True, show: bool | None = None
     ) -> plt.Figure:
         """Heatmap of numeric column correlations."""
         fig, ax = plt.subplots(figsize=(10, 8))
@@ -126,7 +130,7 @@ class Visualizer:
             corr, mask=mask, annot=True, fmt=".2f", cmap=self.palette, linewidths=0.5, ax=ax
         )
         ax.set_title("Feature Correlation Matrix", fontsize=14)
-        self._finish(fig, "correlation_heatmap", save)
+        self._finish(fig, "correlation_heatmap", save, show)
         return fig
 
     # ------------------------------------------------------------------
@@ -137,6 +141,7 @@ class Visualizer:
         self,
         ranking_df: pd.DataFrame,
         save: bool = True,
+        show: bool | None = None,
         top_n: int = 10,
         name_col: str = "name",
     ) -> plt.Figure:
@@ -172,7 +177,7 @@ class Visualizer:
         ax.set_xlabel("Relative Closeness Score")
         ax.set_ylabel("")
         ax.set_xlim(0, top["Score"].max() * 1.12)
-        self._finish(fig, "ranking_results", save)
+        self._finish(fig, "ranking_results", save, show)
         return fig
 
     # ------------------------------------------------------------------
@@ -184,6 +189,7 @@ class Visualizer:
         text_series: pd.Series,
         title: str = "Word Cloud",
         save: bool = True,
+        show: bool | None = None,
     ) -> plt.Figure:
         """Generate a word cloud from a text series."""
         try:
@@ -200,7 +206,7 @@ class Visualizer:
         ax.imshow(wc, interpolation="bilinear")
         ax.axis("off")
         ax.set_title(title, fontsize=14)
-        self._finish(fig, "wordcloud", save)
+        self._finish(fig, "wordcloud", save, show)
         return fig
 
     # ------------------------------------------------------------------
@@ -213,6 +219,7 @@ class Visualizer:
         values: list[float],
         title: str = "Criteria Profile",
         save: bool = True,
+        show: bool | None = None,
     ) -> plt.Figure:
         """Radar/spider chart for a single alternative's criteria profile."""
         angles = np.linspace(0, 2 * np.pi, len(labels), endpoint=False).tolist()
@@ -227,25 +234,34 @@ class Visualizer:
         ax.set_xticks(angles)
         ax.set_xticklabels(labels, fontsize=10)
         ax.set_title(title, fontsize=14, pad=20)
-        self._finish(fig, "radar_chart", save)
+        self._finish(fig, "radar_chart", save, show)
         return fig
 
     # ------------------------------------------------------------------
     # Utility
     # ------------------------------------------------------------------
 
-    def _finish(self, fig: plt.Figure, name: str, save: bool) -> None:
+    def _finish(
+        self,
+        fig: plt.Figure,
+        name: str,
+        save: bool,
+        show: bool | None = None,
+    ) -> None:
         fig.tight_layout()
+        effective_show = self.show if show is None else show
         if save:
             path = self.output_dir / f"{name}.png"
             fig.savefig(path, dpi=self.dpi, bbox_inches="tight")
             logger.info("Saved %s", path)
+        if effective_show:
+            plt.show()  # render while the figure is still open (inline backends)
         plt.close(fig)
 
-    def create_all_plots(self) -> None:
+    def create_all_plots(self, show: bool | None = None) -> None:
         """Run the standard set of project visualisations."""
         logger.info("Generating all standard plots")
-        self.plot_price_trends()
-        self.plot_sentiment_distribution()
-        self.plot_correlation_heatmap()
+        self.plot_price_trends(show=show)
+        self.plot_sentiment_distribution(show=show)
+        self.plot_correlation_heatmap(show=show)
         logger.info("All plots generated")
